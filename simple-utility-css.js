@@ -188,6 +188,12 @@
       txt: ["color"],
       bg: ["background-color"],
       brd: ["border-color"],
+      brdt: ["border-top-color"],
+      brdr: ["border-right-color"],
+      brdb: ["border-bottom-color"],
+      brdl: ["border-left-color"],
+      brdh: ["border-left-color", "border-right-color"],
+      brdv: ["border-top-color", "border-bottom-color"],
     },
     size: {
       txt: ["font-size"],
