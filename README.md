@@ -1,2 +1,2 @@
-# simple-utility-css
-The simplest way to create your own utility CSS framework.
+# fast-utility-css
+The fastest way to create your own utility CSS framework.
