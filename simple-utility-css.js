@@ -6,6 +6,10 @@
     block: "display: block;",
     flex: "display: flex;",
 
+    // visibility
+    hidden: "visibility: hidden;",
+    visible: "visibility: visible;",
+
     // position
     relative: "position: relative;",
     absolute: "position: absolute;",
@@ -20,6 +24,7 @@
     wrap: "flex-wrap: wrap;",
     wrapn: "flex-wrap: nowrap;",
     wrapr: "flex-wrap: wrap-reverse;",
+    flex1: "flex: 1;",
     grow0: "flex-grow: 0;",
     grow1: "flex-grow: 1;",
     grow0: "flex-grow: 0;",
@@ -39,6 +44,7 @@
     jend: "justify-content: flex-end;",
     jbetween: "justify-content: space-between;",
     jaround: "justify-content: space-around;",
+    jevenly: "justify-content: space-evenly;",
     istart: "align-items: flex-start;",
     icenter: "align-items: center;",
     iend: "align-items: flex-end;",
@@ -91,10 +97,9 @@
     bold: "font-weight: bold;",
     bolder: "font-weight: bolder;",
     lighter: "font-weight: lighter;",
-    normal: "font-weight: normal;",
+    normal: "font-weight: normal; font-style: normal;",
     italic: "font-style: italic;",
     oblique: "font-style: oblique;",
-    normal: "font-style: normal;",
 
     // cursor
     pointer: "cursor: pointer;",
@@ -102,6 +107,10 @@
     text: "cursor: text;",
     move: "cursor: move;",
     notallowed: "cursor: not-allowed;",
+
+    // other
+    opacity0: "opacity: 0;",
+    opacity1: "opacity: 1;",
   };
   el.textContent = `
     /* reset */
@@ -114,6 +123,7 @@
     q:before, q:after { content: ''; content: none; }
     table { border-collapse: collapse; border-spacing: 0; }
     * { border-width: 0px; }
+    * { box-sizing: border-box; }
 
     ${Object.entries(statics)
       .map(([key, value]) => `.${key} { ${value} }`)
@@ -246,7 +256,7 @@
     }
   }
   function insertRule(className) {
-    const modifiers = className.split(":").reverse();
+    let modifiers = className.split(":").reverse();
     const branchIdentifier = modifiers.shift();
     let [, siblingClasses, identifier] = branchIdentifier.match(/^(.*?)\.([^.]+)$/) || [];
 
@@ -273,9 +283,10 @@
     for (context in propMap) {
       const value = vars[context][varname];
       if (!value) continue;
-      for (const propName of propMap[context][prop] || []) {
-        sheet.insertRule(`${selector} { ${propName}: ${value}; }`, sheet.cssRules.length);
-      }
+      const propsText = (propMap[context][prop] || [])
+        .map((propName) => `${propName}:${value};`)
+        .join(" ");
+      sheet.insertRule(`${selector} { ${propsText} }`, sheet.cssRules.length);
     }
   }
 })();
