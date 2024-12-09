@@ -22,13 +22,13 @@ html td  { border: 1px solid #000; padding: 5px; vertical-align: top; }
 html th  { font-weight: bold; padding: 5px; }
 
 :root {
-    --class-heading: fnsz-1.2rem fnwtbld mhz-10px mvt-20px p-5 bgc-#666 c-#fff txalctr;
+    --class-heading: fnsz-1.2rem fnwtbld phz-10px pvt-5px mvt-20px bgc-#666 c-#fff txalctr;
     --class-item: p-5 hover:bgc-#666 hover:c-#fff csdef;
 }
 </style>
 <script defer src="../fast-utility-css.js"></script>
 </head>
-<body>
+<body class="p-1rem pb-4rem">
 
 <div class="heading">Static Classes</div>
 <div class="dfl flwr">
@@ -73,6 +73,11 @@ $$ for (let abbr of Object.values(words).map(w => w.abbr).sort()) {
     <span class="item w-3rem" title="{{ css.wordMap[abbr] }}">{{ abbr }}</span>
 $$ }
 </div>
+
+<div class="heading">Reset Styling</div>
+<pre class="mhz-4rem">
+{{ css.resetCSS }}
+</pre>
 
 </body>
 </html>

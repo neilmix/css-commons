@@ -1,8 +1,8 @@
 # css-commons
 
-A learnable class-based CSS utility framework that is a space-efficient CSS subset consisting of the most common CSS properties and values.
+A learnable and low-overhead CSS utility framework for the most common subset of modern CSS.
 
-The css-commons library is a highly pragmatic system that provides a powerful shorthand for the most common CSS styling use-cases
+The css-commons library is a pragmatic system that provides a powerful shorthand for the most common CSS styling use-cases
 in a low-mental-overhead way. It also provides interoperability to allow for solving more uncommon use-cases using
 traditional CSS.
 
@@ -12,17 +12,18 @@ Documentation is currently terse and will be expanded with time and experience.
 
 ## Features Currently Available
 
-- Learnable abvreviated syntax for refering to properties and values as class names
-- Static utility classes for common properties and values
-- Support for ad-hoc dynamic property values
-- CSS variable-based support for custom taxonomy values that are automatically applied to all corresponding properties
-- Psuedo-class support for :hover
-- Dynamic application of classes based on the existence of a parent class
-- Composition-based custom class aggregations
+- Learnable abbvreviated syntax
+- Static utilities for common use-cases
+- Ad-hoc dynamic property values
+- Build-your-own taxonomy that is interoperable with traditional CSS
+- Psuedo-class support
+- Dynamic class cascading from parent to children
+- Class aggregation
+- Lightweight reset
 
 The above is a mouthful. We'll address each one-by-one below.
 
-## Learnable Abvreviated Syntax
+## Learnable Abbvreviated Syntax
 
 CSS naming conventions are quirky and inconsistent. This is because CSS is built to model the world and all of its languages and visual
 design conventions, and the world is quirky and inconsistent.
@@ -45,9 +46,9 @@ most values are 3 letters long.
 
 Here are some quick examples of static utility classes:
 
-| class name | CSS declaration |
+| class name | auto-generated CSS declaration |
 | --- | --- |
-| `brstrno` | `{ border-style-right: none; }` |
+| `brstrdot` | `{ border-style-right: dotted; }` |
 | `brstthid` | `{ border-style-top: hidden; }` |
 | `csdef` | `{ cursor: default; }` |
 | `ofhid` | `{ overflow: hidden; }` |
@@ -56,6 +57,8 @@ Here are some quick examples of static utility classes:
 
 Here are some quick examples of ad-hoc properties and values:
 
+| class name | auto-generated CSS declaration|
+| --- | --- |
 | 'brw-2px' | '{ border-width: 2px; }' |
 | 'c-red' | '{ color: red; }' |
 | 'c-#0000ff' | '{ color: #0000ff; }' |
@@ -64,15 +67,15 @@ Taxonomic values will be described below.
 
 See the `docs` directory for full syntax reference.
 
-# Static utility classes for common properties and values.
+## Static utilities for common use-cases
 
 See above for a description of the syntax, and the `docs` directory for full reference.
 
-# Support for ad-hoc dynamic property values
+## Ad-hoc dynamic property values
 
 See above for a description of the syntax, and the `docs` directory for full reference.
 
-# CSS variable-based support for custom taxonomy values that are automatically applied to all corresponding properties
+## Build-your-own taxonomy that is interoperable with traditional CSS
 
 The css-commons library supports taxonomic declaration of values as CSS variables.
 First, declare a CSS variable on :root using the format below. (This must be declared
@@ -88,30 +91,45 @@ For example:
 ```css
   :root {
     --color-dark: #111122;
+    --color-light: #ffffdd;
     --dim-wide: 960px;
   }
 ```
 
-Now you'll automatically be able to use `red` and `wide` on any appropriate corresponding class:
+Now you'll automatically be able to use `dark` and `wide` on any appropriate corresponding class:
 
+| class name | auto-generated CSS declaration |
+| --- | --- |
 | `brtc-dark` | `{ border-top-color: var(--color-dark); }` |
-| `c-dark` | `{ border-top-color: var(--color-dark); }` |
+| `c-light` | `{ border-top-color: var(--color-light); }` |
 | `w-wide` | `{ width: var(--dim-wide); }` |
+
+Because this taxonomy is declared as valid CSS variables, these values are interoperable with traditional
+CSS styling as well:
+
+```
+<style>
+.gr { background: linear-gradient(var(--color-dark), var(--color-light)); }
+</style>
+```
 
 The types supported are `color`, `size` (font-size and line-height), `family`, `dim` (i.e. dimension),
 `space`, `pos`, `number`, and the a special type of `class` which is described below.
 
 See the `docs` directory for details on which types are applied to which properties.
 
-# Psuedo-class support for :hover
+## Psuedo-class support 
 
 ```
-  <div class="brw-1px brstsol brc-black hover:brc-red">border becomes red when hovered</div>
+  <div class="brw-1px brc-black hover:brc-red">border becomes red when hovered</div>
 ```
+Currently only hover is supported, more to come.
 
-# Dynamic application of classes based on the existence of a parent class
+## Dynamic class cascading from parent to children
 
-This feature can be really handy.
+This feature can be really handy - the ability to dynamically apply a class to a parent element,
+and use it as a pseudo class within its children. No jumping back to the main stylesheet to
+implement cascading selectors on a case-by-case basis.
 
 ```
   <div class="bank-account overdrawn">
@@ -120,15 +138,13 @@ This feature can be really handy.
   </div>
 ```
 
-This works even when the parent's class is applied dynamically.
-
-- Composition-based custom class aggregations
+## Class aggregation
 
 Use a CSS `class` type variable to aggregate multiple classes together.
 
 ```
   :root {
-    --class-merry-christmas: c-red brw-3px brc-green brstsol;
+    --class-merry-christmas: c-red brc-green brw-3px;
   }
 ```
 
@@ -136,8 +152,15 @@ Use a CSS `class` type variable to aggregate multiple classes together.
   <div class="merry-christmas">how festive.</div>
 ```
  
+## Lightweight reset
 
-## PossibleFuture Features
+Elements are all reset to a base unstyled state. See `docs` for details.
+
+## Example Starter Taxonomy
+
+*To be written*
+
+# PossibleFuture Features
 
 Here's a list of what's in-queue for future implementaiton. Please file a ticket to influence this list.
 
