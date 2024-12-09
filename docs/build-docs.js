@@ -1,5 +1,5 @@
 
-const css = require('../fast-utility-css.js');
+const css = require('../css-commons.js');
 const fs = require('fs');
 
 let words = {};
@@ -26,7 +26,7 @@ html th  { font-weight: bold; padding: 5px; }
     --class-item: p-5 hover:bgc-#666 hover:c-#fff csdef;
 }
 </style>
-<script defer src="../fast-utility-css.js"></script>
+<script defer src="../css-commons.js"></script>
 </head>
 <body class="p-1rem pb-4rem">
 
