@@ -1,94 +1,80 @@
 (() => {
 
-  const word_abbr_str = 
-`b:bottom c:color d:display h:height l:left m:margin p:padding r:right t:top w:width
-al:align bg:background bs:basis br:border bk:break cl:column ct:content cs:cursor dc:decoration dr:direction fl:flex fm:family fn:font gp:gap gr:grow it:items js:justify ln:line mx:max mn:min op:opacity of:overflow ps:position rd:radius rw:row sf:self sh:shrink sz:size sp:space st:style tx:text tr:transform vs:visibility vt:vertical wt:weight wh:white wr:wrap
-abs:absolute arn:around aut:auto bal:balance bet:between blk:block bld:bold bdr:bolder bsl:baseline cap:capitalize cps:collapse ctr:center def:default dot:dotted dsh:dashed end:end evn:evenly fxd:fixed hid:hidden inl:inline itc:italic low:lowercase ltr:lighter mid:middle no:no nrm:normal obq:olblique ptr:pointer pre:pre rel:relative scr:scroll sol:solid srt:start stb:stable stt:static stk:sticky str:stretch sub:sub sup:super thr:through und:underline upp:uppercase wr:wrap`;
+  const word_abbr_str = `
+    cursor-:cursor d-:display f-:flex-wrap
+  `;
 
-  const valid_props_str = 
-`alct:nrm,str,srt,ctr,end,flsrt,flend,bsl,spbet,sparn,spevn
-alit:nrm,str,srt,ctr,end,flsrt,flend,bsl,sfsrt,sfend
-alsf:aut,nrm,str,srt,ctr,end,flsrt,flend,bsl,sfsrt,sfend
-jsct:nrm,srt,ctr,end,flsrt,flend,l,r,spbet,sparn,spevn,str
-jsit:nrm,srt,ctr,end,flsrt,flend,sfsrt,sfend,l,r,bsl,str
-jssf:aut,nrm,srt,ctr,end,flsrt,flend,sfsrt,sfend,l,r,bsl,str
-txal:srt,end,l,r,ctr,js
-brst:no,hid,sol,dsh,dot
-brstt:no,hid,sol,dsh,dot
-brstr:no,hid,sol,dsh,dot
-brstb:no,hid,sol,dsh,dot
-brstl:no,hid,sol,dsh,dot
-brsthz:no,hid,sol,dsh,dot
-brstvt:no,hid,sol,dsh,dot
-cs:aut,def,no,ptr
-d:no,blk,fl,inl,inlblk,inlfl
-fldr:rw,cl
-flwr:,no,wr
-fnst:nrm,itc,obq
-fnwt:nrm,bld,ltr,bdr
-of:vs,hid,scr,aut
-ps:stt,rel,abs,fxd,stk
-txdc:no,und,lnthr
-txtr:no,cap,upp,low
-vtal:bsl,sub,sup,txt,txb,mid,t,b
-vs:,vs,hid,cps
-whsp:nrm,no,pre,preln,prewr,bksp`;
+const valid_props_str = 
+`cursor-:auto,default,pointer
+d-:none,block,inline,flex,inline-block,inline-flex
+f-:wrap,nowrap,wrap-reverse`;
 
   const typeMap = {
     color: {
       c: ["color"],
-      bgc: ["background-color"],
-      brc: ["border-color"],
-      brtc: ["border-top-color"],
-      brrc: ["border-right-color"],
-      brbc: ["border-bottom-color"],
-      brlc: ["border-left-color"],
-      brhzc: ["border-left-color", "border-right-color"],
-      brvtc: ["border-top-color", "border-bottom-color"],
-      tdc: ["text-decoration-color"],
+      bg: ["background-color"],
+      b: ["border-color"],
+      bt: ["border-top-color"],
+      br: ["border-right-color"],
+      bb: ["border-bottom-color"],
+      bl: ["border-left-color"],
+      bhz: ["border-left-color", "border-right-color"],
+      bvt: ["border-top-color", "border-bottom-color"],
     },
     size: {
-      fnsz: ["font-size"],
-      lnh: ["line-height"],
+      font: ["font-size"],
+      lineh: ["line-height"],
     },
     family: {
-      fnfm: ["font-family"],
+      font: ["font-family"],
     },
     dim: {
       w: ["width"],
-      mnw: ["min-width"],
-      mxw: ["max-width"],
-      wmn: ["min-width"],
-      wmx: ["max-width"],
+      minw: ["min-width"],
+      maxw: ["max-width"],
+      wmin: ["min-width"],
+      wmax: ["max-width"],
       h: ["height"],
-      mnh: ["min-height"],
-      mxh: ["max-height"],
-      hmn: ["min-height"],
-      hmx: ["max-height"],
-      flbs: ["flex-basis"],
+      minh: ["min-height"],
+      maxh: ["max-height"],
+      hmin: ["min-height"],
+      hmax: ["max-height"],
+      basis: ["flex-basis"],
+    },
+    "width": {
+      b: ["border-width"],
+      bt: ["border-top-width"],
+      br: ["border-right-width"],
+      bb: ["border-bottom-width"],
+      bl: ["border-left-width"],
+      btl: ["border-top-width", "border-left-width"],
+      btr: ["border-top-width", "border-right-width"],
+      bbr: ["border-bottom-width", "border-right-width"],
+      bbl: ["border-bottom-width", "border-left-width"],
+      bhz: ["border-left-width", "border-right-width"],
+      bvt: ["border-top-width", "border-bottom-width"],
+    },
+    "radius": {
+      radius: ["border-radius"],
+      radiust: ["border-top-left-radius", "border-top-right-radius"],
+      radiusr: ["border-top-right-radius", "border-bottom-right-radius"],
+      radiusb: ["border-bottom-right-radius", "border-bottom-left-radius"],
+      radiusl: ["border-bottom-left-radius", "border-top-left-radius"],
+      radiustl: ["border-top-left-radius"],
+      radiustr: ["border-top-right-radius"],
+      radiusbr: ["border-bottom-right-radius"],
+      radiusbl: ["border-bottom-left-radius"],
     },
     space: {
-      brw: ["border-width"],
-      brtw: ["border-top-width"],
-      brrw: ["border-right-width"],
-      brbw: ["border-bottom-width"],
-      brlw: ["border-left-width"],
-      brhzw: ["border-left-width", "border-right-width"],
-      brvtw: ["border-top-width", "border-bottom-width"],
-      brrd: ["border-radius"],
-      brtlrd: ["border-top-left-radius"],
-      brtrrd: ["border-top-right-radius"],
-      brbrrd: ["border-bottom-right-radius"],
-      brblrd: ["border-bottom-left-radius"],
-      brtrd: ["border-top-left-radius", "border-top-right-radius"],
-      brrrd: ["border-top-right-radius", "border-bottom-right-radius"],
-      brbrd: ["border-bottom-right-radius", "border-bottom-left-radius"],
-      brlrd: ["border-bottom-left-radius", "border-top-left-radius"],
       m: ["margin"],
       mt: ["margin-top"],
       mr: ["margin-right"],
       mb: ["margin-bottom"],
       ml: ["margin-left"],
+      mtl: ["margin-top", "margin-left"],
+      mtr: ["margin-top", "margin-right"],
+      mbr: ["margin-bottom", "margin-right"],
+      mbl: ["margin-bottom", "margin-left"],
       mhz: ["margin-left", "margin-right"],
       mvt: ["margin-top", "margin-bottom"],
       p: ["padding"],
@@ -96,39 +82,56 @@ whsp:nrm,no,pre,preln,prewr,bksp`;
       pr: ["padding-right"],
       pb: ["padding-bottom"],
       pl: ["padding-left"],
+      ptl: ["padding-top", "padding-left"],
+      ptr: ["padding-top", "padding-right"],
+      pbr: ["padding-bottom", "padding-right"],
+      pbl: ["padding-bottom", "padding-left"],
       phz: ["padding-left", "padding-right"],
       pvt: ["padding-top", "padding-bottom"],
-      gp: ["gap"],
-      gprw: ["row-gap"],
-      gpcl: ["column-gap"],
-      rwgp: ["row-gap"],
-      clgp: ["column-gap"],
+      gap: ["gap"],
+      gaprow: ["row-gap"],
+      gapcol: ["column-gap"],
+      rowgap: ["row-gap"],
+      colgap: ["column-gap"],
     },
     pos: {
-      t: ["top"],
-      r: ["right"],
-      b: ["bottom"],
-      l: ["left"],
+      top: ["top"],
+      right: ["right"],
+      bottom: ["bottom"],
+      left: ["left"],
     },
-    number: {
-      flgr: ["flex-grow"],
-      flsh: ["flex-shrink"],
-      op: ["opacity"],
+    stretch: {
+      grow: ["flex-grow"],
+      shrink: ["flex-shrink"],
+    },
+    opacity: {
+      opacity: ["opacity"],
+    },
+    z: {
       z: ["z-index"],
     }
   };
 
-  const dynPropAbbrMap = {};
+  const dynClassPropMap = {};
   const dynPropSet = new Set();
   const dynClassSet = new Set();
   for (const type in typeMap) {
-    for (const abbr in typeMap[type]) {
-      dynPropAbbrMap[abbr] = { abbr, type, props: typeMap[type][abbr] };
-      dynClassSet.add(abbr);
-      typeMap[type][abbr].forEach(p => dynPropSet.add(p));
+    for (const cls in typeMap[type]) {
+      let desc = dynClassPropMap[cls];
+      if (!desc) {
+        desc = { cls: cls, props: [], types: new Set(), propTypeMap: {} };
+        dynClassPropMap[cls] = desc;
+      }
+      for (const prop of typeMap[type][cls]) {
+        desc.propTypeMap[prop] = type;
+        desc.props.push(prop);
+        desc.types.add(type);
+      }
+      dynClassSet.add(cls);
+      typeMap[type][cls].forEach(p => dynPropSet.add(p));
     }
   }
-
+  
   const wordMap = word_abbr_str.split(/[ \n]+/).reduce((o, cfg) => {
     const [key, value] = cfg.split(":");
     o[key] = value;
@@ -136,43 +139,14 @@ whsp:nrm,no,pre,preln,prewr,bksp`;
   }, {});
 
   function expand_name(abbr) {
-    let i = 0;
-    let prop = '';
-    while (i < abbr.length) {
-      let sym = abbr.slice(i, i + 2);
-      if (!wordMap[sym]) sym = abbr[i];
-
-      let word = wordMap[sym];
-      if (!word) break;
-
-      if (prop) prop += "-";
-      prop += word;
-      i += sym.length;
-    }
-    if (i < abbr.length) throw new Error(`Unknown property: ${abbr}`);
-    return prop;
+    let props = abbr.split(" ");
+    props.forEach(p => { if (!wordMap[p]) throw new Error(`Unknown word ${p} of property ${abbr}`) });
+    return props.map(p => wordMap[p]).join("-");
   }
 
   function expand_value(abbr) {
-    let i = 0;
-    let val = '';
-    while (i < abbr.length) {
-      let sym = abbr.slice(i, i + 3);
-      if (!wordMap[sym]) sym = abbr.slice(i, i + 2);
-      if (!wordMap[sym]) sym = abbr[i];
-
-      let word = wordMap[sym];
-      if (!word) break;
-
-      if (word == "visibility") word = "visible";
-
-      if (val) val += "-";
-      val += word;
-      i += sym.length;
-    }
-
-    if (i < abbr.length) throw new Error(`Unknown value: ${abbr}`);
-    return val;
+    let values = abbr.split(" ");
+    return values.map(v => wordMap[v] || v).join("-");
   }
 
   let conv_sheet = '';
@@ -180,54 +154,54 @@ whsp:nrm,no,pre,preln,prewr,bksp`;
   const staticMap = {};
   const staticClassSet = new Set();
   const staticPropSet = new Set();
-  for (let i = 0; i < valid_props_arr.length; i += 2) {
-    const name = valid_props_arr[i];
-    const values = valid_props_arr[i + 1].split(",");
-    if (name.endsWith("hz")) {
-      for (let value of values) {
-        const short = name.slice(0, -2);
-        const rulename = `${name}${value}`;
-        const def = `${staticMap[`${short}l${value}`]} ${staticMap[`${short}r${value}`]}`;
-        staticMap[rulename] = def;
-        conv_sheet += `.${rulename} { ${def} }\n`;
-      }
-      continue;
-    }
-    if (name.endsWith("vt")) {
-      for (let value of values) {
-        const short = name.slice(0, -2);
-        const rulename = `${name}${value}`;
-        const def = `${staticMap[`${short}t${value}`]} ${staticMap[`${short}b${value}`]}`;
-        staticMap[rulename] = def;
-        conv_sheet += `.${rulename} { ${def} }\n`;
-      }
-      continue;
-    }
-    for (let value of values) {
-      const name_ex = expand_name(name);
-      let value_ex;
-      if (value == "no") {
-        if (["brst", "brstt", "brstr", "brstb", "brstl", "cs", "d", "txdc", "txtr"].includes(name)) {
-          value_ex = "none";
-        } else if (["flwr", "whsp"].includes(name)) {
-          value_ex = "nowrap";
-        } else {
-          throw new Error(`Can't find value "no" for ${name_ex}`);
+  if (valid_props_arr.length % 2 == 0) {
+    for (let i = 0; i < valid_props_arr.length; i += 2) {
+      const name = valid_props_arr[i];
+      const values = valid_props_arr[i + 1].split(",");
+      if (name.endsWith("hz")) {
+        for (let value of values) {
+          const short = name.slice(0, -2);
+          const rulename = `${name}${value}`;
+          const def = `${staticMap[`${short}l${value}`]} ${staticMap[`${short}r${value}`]}`;
+          staticMap[rulename] = def;
+          conv_sheet += `.${rulename} { ${def} }\n`;
         }
-      } else {
-        value_ex = expand_value(value);
-        if (value == "bksp") value_ex += "s";
-        if (value_ex == "") value_ex = { "flwr": "wrap", "vs": "visible" }[name];
+        continue;
       }
-      const rulename = `${name}${value}`;
-      const def = `${name_ex}: ${value_ex};`;
-      staticMap[rulename] = def;
-      staticClassSet.add(rulename);
-      staticPropSet.add(name_ex);
-      conv_sheet += `.${rulename} { ${def} }\n`;
+      if (name.endsWith("vt")) {
+        for (let value of values) {
+          const short = name.slice(0, -2);
+          const rulename = `${name}${value}`;
+          const def = `${staticMap[`${short}t${value}`]} ${staticMap[`${short}b${value}`]}`;
+          staticMap[rulename] = def;
+          conv_sheet += `.${rulename} { ${def} }\n`;
+        }
+        continue;
+      }
+      const name_ex = expand_name(name);
+      for (let value of values) {
+        let value_ex;
+        if (value == "no") {
+          if (["brst", "brstt", "brstr", "brstb", "brstl", "cs", "d", "txdc", "txtr"].includes(name)) {
+            value_ex = "none";
+          } else if (["flwr", "whsp"].includes(name)) {
+            value_ex = "nowrap";
+          } else {
+            throw new Error(`Can't find value "no" for ${name_ex}`);
+          }
+        } else {
+          value_ex = expand_value(value);
+        }
+        const rulename = `${name}${value}`;
+        const def = `${name_ex}: ${value_ex};`;
+        staticMap[rulename] = def;
+        staticClassSet.add(rulename);
+        staticPropSet.add(name_ex);
+        conv_sheet += `.${rulename} { ${def} }\n`;
+      }
     }
   }
-  
+
   const resetCSS = `
 html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, 
 pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, 
@@ -248,7 +222,7 @@ table { border-collapse: collapse; border-spacing: 0; }
 
   if (typeof module != "undefined" && module.exports) {
     // we're being required as a node module
-    module.exports = { wordMap, staticMap, typeMap, dynPropAbbrMap, resetCSS, staticPropSet, staticClassSet, dynPropSet, dynClassSet };
+    module.exports = { wordMap, staticMap, typeMap, dynClassPropMap, resetCSS, staticPropSet, staticClassSet, dynPropSet, dynClassSet };
     return;
   }
 
@@ -261,16 +235,11 @@ table { border-collapse: collapse; border-spacing: 0; }
   const sheet = document.styleSheets[document.styleSheets.length - 1];
 
   const generatedRules = new Set(Object.keys(staticMap));
-  const vars = {
-    color: {},
-    size: {},
-    family: {},
-    dim: {},
-    space: {},
-    pos: {},
-    number: {},
-    "class": {},
-  };
+  const vars = {};
+  for (const name in typeMap) {
+    vars[name] = {};
+  }
+  vars["class"] = {};
 
   const propertyRx = new RegExp(`^--(${Object.keys(vars).join("|")})-(.+)$`);
   for (const sheet of document.styleSheets) {
@@ -358,25 +327,33 @@ table { border-collapse: collapse; border-spacing: 0; }
       return rules;
     }
 
-    const [, prop, varname] = identifier.match(/^([^-]+)-(.+)$/) || [];
-    const propDesc = dynPropAbbrMap[prop];
-    if (!propDesc) {
+    const [, cls, varname] = identifier.match(/^([^-]+)-(.+)$/) || [];
+    const desc = dynClassPropMap[cls];
+    if (!desc) {
       if (selector.indexOf(":hover") > 0) {
         console.warn(`${className} - hover: applied to unrecoginized class ${identifier} - ignoring`);
       }
       return [];
     }
-    let value = vars[propDesc.type][varname];
-    // if we don't find a matching var, use the varname as the value which allows people to put
-    // in values on-the-fly (e.g. w-400px)
-    if (value) {
-      value = `var(--${propDesc.type}-${varname})`;
-    } else {
-      value = varname;
+
+    let type;
+    for (const t of desc.types) {
+      if (vars[t][varname]) {
+        type = t;
+        break;
+      }
     }
-    const propsText = (propDesc.props || [])
-      .map((propName) => `${propName}:${value};`)
-      .join(" ");
-    return [{selector, propsText}];
+
+    let props;
+    if (type) {
+      props = typeMap[type][cls].map(p => `${p}: var(--${type}-${varname});`);
+    } else {
+      // if we don't find a matching var, use the varname as the value which allows people to put
+      // in values on-the-fly (e.g. w-400px). We'll use it in all possible properties, relying
+      // on the fact that the CSS engine will ignore invalid properties.
+      props = desc.props.map(p => `${p}: ${varname};`);
+    }
+
+    return [{selector, propsText: props.join(" ")}];
   }
 })();

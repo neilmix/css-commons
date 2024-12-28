@@ -4,41 +4,40 @@
             :root {
                 --color-green: #009900;
                 --color-white: #ffffff;
-                --space-1: 1px;
-                --space-thick: 10px;
+                --border-width-1: 1px;
+                --border-width-thick: 10px;
                 --dim-md: 800px;
                 --dim-xl: 1080px;
                 --dim-all: 100%;
-                --class-invert: bgc-green c-white csdef;
-                --class-invert-hover: bgc-green c-white hover:c-green hover:bgc-white csdef;
+                --class-invert: bg-green c-white curdef;
+                --class-invert-hover: bg-green c-white hover:c-green hover:bg-white curdef;
             }
-            html body { padding: 10px; }
+            html body { padding: 10px; font-family: Helvetica, sans-serif; font-size: 16px; }
             html h2 { margin: 10px 0px; font-weight: bold; background-color: #666; color: #fff; padding: 5px 5px;}
-            html * { font-family: Helvetica, sans-serif; font-size: 16px; }
         </style>
         <script defer src="../css-commons.js"></script>
     </head>
     <body>
         <h2>colors</h2>
         <span class="c-green">c-green</span>
-        <span class="c-white bgc-green">c-white bgc-green</span>
-        <span class="brc-green brw-1">brc-green brw-1</span>
+        <span class="c-white bg-green">c-white bg-green</span>
+        <span class="b-green b-1">b-green b-1</span>
         <h2>borders</h2>
-        <span class="brw-1 brc-green">brw-1</span>
-        <span class="brtw-1 brc-green">brtw-1</span>
-        <span class="brrw-1 brc-green">brrw-1</span>
-        <span class="brbw-1 brc-green">brbw-1</span>
-        <span class="brlw-1 brc-green">brlw-1</span>
-        <span class="brhzw-1 brc-green">brhzw-1</span>
-        <span class="brvtw-1 brc-green">brvtw-1</span>
+        <span class="b-1 b-green">b-1</span>
+        <span class="bt-1 b-green">bt-1</span>
+        <span class="br-1 b-green">br-1</span>
+        <span class="bb-1 b-green">bb-1</span>
+        <span class="bl-1 b-green">bl-1</span>
+        <span class="bhz-1 b-green">bhz-1</span>
+        <span class="bvt-1 b-green">bvt-1</span>
 
         <h2>widths</h2>
-        <span class="dblk mnw-md mxw-xl brw-1">mnw-xs mxw-xl</span>
-        <span class="dblk w-all brw-1">w-all</span>
-        <span class="dblk w-400px brw-1 dont-log-error">w-400px</span>
+        <span class="dblock minw-md wmax-xl b-1">minw-xs wmax-xl</span>
+        <span class="dblock w-all b-1">w-all</span>
+        <span class="dblock w-400px b-1 dont-log-error">w-400px</span>
 
         <h2>ad-hoc</h2>
-        <span class="brw-2px">brw-2px</span>
+        <span class="b-2px">b-2px</span>
         <span class="c-red">c-red</span>
         <span class="c-#0000ff">c-#0000ff</span>
 
