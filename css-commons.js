@@ -1,187 +1,189 @@
+
 (() => {
 
-  const word_abbr_str = `
-    cursor-:cursor d-:display f-:flex-wrap
-  `;
+  const TIERS = 6;
+  
+  class Theme {
+    constructor(name, color, config) {
+      this.name = name;
+      this.color = color;
 
-const valid_props_str = 
-`cursor-:auto,default,pointer
-d-:none,block,inline,flex,inline-block,inline-flex
-f-:wrap,nowrap,wrap-reverse`;
+      let [h, s, l] = [this.color.h, this.color.s, this.color.l];
+      this.parseColor(
+        config, "bgc", 
+        {h: h, s: Math.min(s/2, 5),  l: 97                              },
+        {h: h, s: s/2,               l: l + (100 - l)/1.5               },
+        {h: h, s: Math.min(s/2, 5),  l: l / 1.5                         },
+        {h: h, s: s/2,               l: 3                               });
 
-  const typeMap = {
-    color: {
-      c: ["color"],
-      bg: ["background-color"],
-      b: ["border-color"],
-      bt: ["border-top-color"],
-      br: ["border-right-color"],
-      bb: ["border-bottom-color"],
-      bl: ["border-left-color"],
-      bhz: ["border-left-color", "border-right-color"],
-      bvt: ["border-top-color", "border-bottom-color"],
-    },
-    size: {
-      font: ["font-size"],
-      lineh: ["line-height"],
-    },
-    family: {
-      font: ["font-family"],
-    },
-    "width": {
-      b: ["border-width"],
-      bt: ["border-top-width"],
-      br: ["border-right-width"],
-      bb: ["border-bottom-width"],
-      bl: ["border-left-width"],
-      btl: ["border-top-width", "border-left-width"],
-      btr: ["border-top-width", "border-right-width"],
-      bbr: ["border-bottom-width", "border-right-width"],
-      bbl: ["border-bottom-width", "border-left-width"],
-      bhz: ["border-left-width", "border-right-width"],
-      bvt: ["border-top-width", "border-bottom-width"],
-    },
-    "radius": {
-      radius: ["border-radius"],
-      radiust: ["border-top-left-radius", "border-top-right-radius"],
-      radiusr: ["border-top-right-radius", "border-bottom-right-radius"],
-      radiusb: ["border-bottom-right-radius", "border-bottom-left-radius"],
-      radiusl: ["border-bottom-left-radius", "border-top-left-radius"],
-      radiustl: ["border-top-left-radius"],
-      radiustr: ["border-top-right-radius"],
-      radiusbr: ["border-bottom-right-radius"],
-      radiusbl: ["border-bottom-left-radius"],
-    },
-    space: {
-      m: ["margin"],
-      mt: ["margin-top"],
-      mr: ["margin-right"],
-      mb: ["margin-bottom"],
-      ml: ["margin-left"],
-      mtl: ["margin-top", "margin-left"],
-      mtr: ["margin-top", "margin-right"],
-      mbr: ["margin-bottom", "margin-right"],
-      mbl: ["margin-bottom", "margin-left"],
-      mhz: ["margin-left", "margin-right"],
-      mvt: ["margin-top", "margin-bottom"],
-      p: ["padding"],
-      pt: ["padding-top"],
-      pr: ["padding-right"],
-      pb: ["padding-bottom"],
-      pl: ["padding-left"],
-      ptl: ["padding-top", "padding-left"],
-      ptr: ["padding-top", "padding-right"],
-      pbr: ["padding-bottom", "padding-right"],
-      pbl: ["padding-bottom", "padding-left"],
-      phz: ["padding-left", "padding-right"],
-      pvt: ["padding-top", "padding-bottom"],
-      gap: ["gap"],
-      gaprow: ["row-gap"],
-      gapcol: ["column-gap"],
-      rowgap: ["row-gap"],
-      colgap: ["column-gap"],
-    },
-  };
+      this.parseColor(
+        config, "bc",  
+        {h: h, s: Math.min(s, 5),    l: l + (100 - l)/1.5               },
+        {h: h, s: s,                 l: l                               },
+        {h: h, s: Math.min(s, 5),    l: l                               },
+        {h: h, s: s,                 l: l / 1.5                         });
 
-  const dynClassPropMap = {};
-  const dynPropSet = new Set();
-  const dynClassSet = new Set();
-  for (const type in typeMap) {
-    for (const cls in typeMap[type]) {
-      let desc = dynClassPropMap[cls];
-      if (!desc) {
-        desc = { cls: cls, props: [], types: new Set(), propTypeMap: {} };
-        dynClassPropMap[cls] = desc;
+      this.parseColor(
+        config, "hc",  
+        {h: h, s: s/2,               l: l/2                             },
+        {h: h, s: s,                 l: l                               },
+        {h: h, s: s/2,               l: l + (100 - l) / 2               },
+        {h: h, s: s,                 l: l                               });
+
+      this.parseColor(
+        config, "tc",  
+        {h: h, s: Math.max(s/4, 25), l: l + (100 - l)/2                 },
+        {h: h, s: Math.min(s, 5),    l: Math.max(l/1.5, 5)              },
+        {h: h, s: Math.max(s/4, 25), l: l + (100 - l)/2                 },
+        {h: h, s: Math.min(s, 5),    l: Math.min(l + (100 - l)/1.5, 95) });
+  
+      this.parseNumber(config, "bw", 1/16, 3/16);
+      this.parseNumber(config, "br", 5/16, 20/16);
+      this.parseNumber(config, "hs", .75,  3);
+      this.parseNumber(config, "ts", .75,  2);
+  
+      this.parseNumber(config, "p", .5, 3);
+      this.parseNumber(config, "m", this.pStart || .5, this.pEnd || 3);
+      this.parseNumber(config, "g", this.pStart || .5, this.pEnd || 3); 
+
+      this.parseWeight(config, "hw", Array(TIERS).fill(700));
+      this.parseWeight(config, "tw", Array(TIERS).fill(400));
+    }
+
+    parseColor(config, name, ls, le, ds, de) {
+      this[name] = {
+        light: {
+          start: cssColorToHSL(config[`light-${name}-start`]) || ls,
+          end:   cssColorToHSL(config[`light-${name}-end`]) || le,
+        },
+        dark: {
+          start: cssColorToHSL(config[`dark-${name}-start`]) || ds,
+          end:   cssColorToHSL(config[`dark-${name}-end`]) || de,
+        }
+      };
+      this[name].light.range = makeColorRange(this[name].light.start, this[name].light.end, TIERS);
+      this[name].dark.range = makeColorRange(this[name].dark.start, this[name].dark.end, TIERS);
+    }
+
+    parseNumber(config, name, start, end) {
+      this[name] = {};
+      this[name].start = config[`${name}-start`] || `${start}rem`;
+      this[name].end = config[`${name}-end`] || `${end}rem`;
+      this[name].range = [];
+      const s = `var(--theme-${this.name}-${name}-start)`;
+      const e = `var(--theme-${this.name}-${name}-end)`;
+      for (let i = 0; i < TIERS; i++) {
+        this[name].range.push(`calc(${s} + (${e} - ${s}) * ${i} / (${TIERS}))`);
       }
-      for (const prop of typeMap[type][cls]) {
-        desc.propTypeMap[prop] = type;
-        desc.props.push(prop);
-        desc.types.add(type);
+    }
+
+    parseWeight(config, name, weights) {
+      this[name] = {};
+      this[name].range = config[name] ? config[name].split(/\s+/) : weights;
+      while (this[name].range.length < TIERS) {
+        this[name].range.push(this[name].range[this[name].range.length - 1]);
       }
-      dynClassSet.add(cls);
-      typeMap[type][cls].forEach(p => dynPropSet.add(p));
+    }
+    
+    toCSS() {
+      const css = [];
+      css.push(`:root {`);
+      css.push(`  --theme-${this.name}-color: ${cssColor(this.color)};`);
+
+      for (let c of ["bgc", "bc", "hc", "tc"]) {
+        css.push(`  --theme-${this.name}-light-${c}-start: ${cssColor(this[c].light.start)};`);
+        css.push(`  --theme-${this.name}-light-${c}-end: ${cssColor(this[c].light.end)};`);
+        css.push(`  --theme-${this.name}-dark-${c}-start: ${cssColor(this[c].dark.start)};`);
+        css.push(`  --theme-${this.name}-dark-${c}-end: ${cssColor(this[c].dark.end)};`);
+      }
+
+      for (let n of ["bw", "br", "hs", "ts", "p", "m", "g"]) {
+        css.push(`  --theme-${this.name}-${n}-start: ${this[n].start};`);
+        css.push(`  --theme-${this.name}-${n}-end: ${this[n].end};`);
+      }
+
+      for (let w of ["hw", "tw"]) {
+        css.push(`  --theme-${this.name}-${w}: ${this[w].range.join(" ")};`);
+      }
+      css.push(`}`);
+
+      css.push(`:root {`);
+      for (let c of ["bgc", "bc", "hc", "tc"]) {
+        for (let t = 0; t < TIERS; t++) {
+          css.push(`  --theme-${this.name}-light-${c}${t+1}: ${this[c].light.range[t]};`);
+        }
+        for (let t = 0; t < TIERS; t++) {
+          css.push(`  --theme-${this.name}-dark-${c}${t+1}: ${this[c].dark.range[t]};`);
+        }
+      }
+
+      for (let n of ["bw", "br", "hs", "ts", "p", "m", "g"]) {
+        for (let t = 0; t < TIERS; t++) {
+          css.push(`  --theme-${this.name}-${n}${t+1}: ${this[n].range[t]};`);
+        }
+      }
+
+      for (let w of ["hw", "tw"]) {
+        for (let t = 0; t < TIERS; t++) {
+          css.push(`  --theme-${this.name}-${w}${t+1}: ${this[w].range[t]};`);
+        }
+      }
+      css.push(`}`);
+
+      css.push(`:root {`);
+      for (let n of ["bw", "br", "hs", "ts", "p", "m", "g"]) {
+        for (let t = 0; t < TIERS; t++) {
+          css.push(`  --${this.name}-${n}${t+1}: ${this[n].range[t]};`);
+        }
+      }
+      for (let w of ["hw", "tw"]) {
+        for (let t = 0; t < TIERS; t++) {
+          css.push(`  --${this.name}-${w}${t+1}: ${this[w].range[t]};`);
+        }
+      }
+      css.push(`}`);
+
+      const light = [];
+      for (let c of ["bgc", "bc", "hc", "tc"]) {
+        for (let t = 0; t < TIERS; t++) {
+          light.push(`  --${this.name}-${c}${t+1}: var(--theme-${this.name}-light-${c}${t+1});`);
+        }
+      }
+      const lightText = light.join("\n");
+
+      const dark = [];
+      for (let c of ["bgc", "bc", "hc", "tc"]) {
+        for (let t = 0; t < TIERS; t++) {
+          dark.push(`  --${this.name}-${c}${t+1}: var(--theme-${this.name}-dark-${c}${t+1});`);
+        }
+      }
+      const darkText = dark.join("\n");
+
+      css.push(`.${this.name} {`);
+      css.push(`  ${lightText}`);
+      css.push(`}`);
+
+      for (let i = 0; i < 9; i++) {
+        const selector = `.${this.name} ` + Array(i+1).fill('.inverse').join(' ');
+        css.push(`${selector} {`);
+        if (i & 1) {
+          css.push(`  ${lightText}`);
+        } else {
+          css.push(`  ${darkText}`);
+        }
+        css.push(`}`);
+        css.push.apply(css, makeVars(this.name, `${selector} {`, `}`));
+      }
+
+      const layer2 = makeVars(this.name, `@layer ${this.name}2 { .${this.name} {`, `} }`);
+      const layer3 = makeLayer(this.name, this.name + '-');
+      return [...css, ...layer2, ...layer3].join("\n");
     }
   }
   
-  const wordMap = word_abbr_str.split(/[ \n]+/).reduce((o, cfg) => {
-    const [key, value] = cfg.split(":");
-    o[key] = value;
-    return o;
-  }, {});
-
-  function expand_name(abbr) {
-    let props = abbr.split(" ");
-    props.forEach(p => { if (!wordMap[p]) throw new Error(`Unknown word ${p} of property ${abbr}`) });
-    return props.map(p => wordMap[p]).join("-");
-  }
-
-  function expand_value(abbr) {
-    let values = abbr.split(" ");
-    return values.map(v => wordMap[v] || v).join("-");
-  }
-
-  let conv_sheet = '';
-  const valid_props_arr = valid_props_str.split(/[\n:]/);
-  const staticMap = {};
-  const staticClassSet = new Set();
-  const staticPropSet = new Set();
-  if (valid_props_arr.length % 2 == 0) {
-    for (let i = 0; i < valid_props_arr.length; i += 2) {
-      const name = valid_props_arr[i];
-      const values = valid_props_arr[i + 1].split(",");
-      if (name.endsWith("hz")) {
-        for (let value of values) {
-          const short = name.slice(0, -2);
-          const rulename = `${name}${value}`;
-          const def = `${staticMap[`${short}l${value}`]} ${staticMap[`${short}r${value}`]}`;
-          staticMap[rulename] = def;
-          conv_sheet += `.${rulename} { ${def} }\n`;
-        }
-        continue;
-      }
-      if (name.endsWith("vt")) {
-        for (let value of values) {
-          const short = name.slice(0, -2);
-          const rulename = `${name}${value}`;
-          const def = `${staticMap[`${short}t${value}`]} ${staticMap[`${short}b${value}`]}`;
-          staticMap[rulename] = def;
-          conv_sheet += `.${rulename} { ${def} }\n`;
-        }
-        continue;
-      }
-      const name_ex = expand_name(name);
-      for (let value of values) {
-        let value_ex;
-        if (value == "no") {
-          if (["brst", "brstt", "brstr", "brstb", "brstl", "cs", "d", "txdc", "txtr"].includes(name)) {
-            value_ex = "none";
-          } else if (["flwr", "whsp"].includes(name)) {
-            value_ex = "nowrap";
-          } else {
-            throw new Error(`Can't find value "no" for ${name_ex}`);
-          }
-        } else {
-          value_ex = expand_value(value);
-        }
-        const rulename = `${name}${value}`;
-        const def = `${name_ex}: ${value_ex};`;
-        staticMap[rulename] = def;
-        staticClassSet.add(rulename);
-        staticPropSet.add(name_ex);
-        conv_sheet += `.${rulename} { ${def} }\n`;
-      }
-    }
-  }
-
-  const resetCSS = `
-@layer reset {
-  html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, 
-  pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, 
-  samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, 
-  li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, 
-  article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, 
-  menu, nav, output, ruby, section, summary, time, mark, audio, video 
-  { margin: 0; padding: 0; border: 0; font-size: 100%; font: inherit; border-style: solid; border-width: 0;}
+  const baseCSS = `
+@layer base {
+  * { margin: 0; padding: 0; border: 0; font-size: 16px; font: inherit; border-style: solid; border-width: 0;}
 
   body { line-height: 1; }
   ol, ul { list-style: none; }
@@ -190,306 +192,165 @@ f-:wrap,nowrap,wrap-reverse`;
   table { border-collapse: collapse; border-spacing: 0; }
   * { border-width: 0px; box-sizing: border-box; transition-duration: 0.25s; transition-behavior: allow-discrete;}
   :not(:defined) { display: block; }
+
+  .row0 { display: flex; flex-direction: row; gap: 0; }
+  .col0 { display: flex; flex-direction: column; gap: 0; }
+  .outline0 { outline-width: 0; }
+  .stretch { flex-grow: 1; }
+  .center { display: grid; place-items: center; }
+
+  .absent { display: none; opacity: 0; }
 }
 `;
 
-  if (typeof module != "undefined" && module.exports) {
-    // we're being required as a node module
-    module.exports = { wordMap, staticMap, typeMap, dynClassPropMap, resetCSS, staticPropSet, staticClassSet, dynPropSet, dynClassSet };
-    return;
+  const layer1 = makeLayer('layer1', '');
+  const computed = getComputedStyle(document.documentElement);
+  const themes = {};
+  for (const prop of computed) {
+    if (prop.match(/^--theme-([^\-]+)-(.+)/)) {
+      const theme = RegExp.$1;
+      const varname = RegExp.$2;
+      if (!themes[theme]) {
+        themes[theme] = {};
+      }
+      themes[theme][varname] = computed.getPropertyValue(prop).trim();
+    }
+  }
+  
+  const css = [baseCSS, layer1.join('\n')];
+  for (const [themeName, config] of Object.entries(themes)) {
+    if (!config.color) {
+      console.error(`css-commons: Theme ${themeName} does not have a color defined.`);
+      continue;
+    }
+
+    const color = cssColorToHSL(config.color);
+    if (!color) {
+      console.error(`css-commons: Theme ${themeName} color is not valid.`);
+      continue;
+    }
+
+    const theme = new Theme(themeName, color, config);
+    css.push(theme.toCSS());
   }
 
   const el = document.createElement("style");
-  el.textContent = `
-  ${resetCSS}
-  ${conv_sheet}
-  `;
+  el.textContent = css.join("\n");
   document.head.appendChild(el);
-  const sheet = document.styleSheets[document.styleSheets.length - 1];
-  function insertRule(text) {
-    sheet.insertRule(text, sheet.cssRules.length);
-  }
 
-  const generatedRules = new Set(Object.keys(staticMap));
-  const vars = {};
-  for (const name in typeMap) {
-    vars[name] = {};
-  }
-  vars["class"] = {};
+  /* Helper functions */
 
-  const propertyRx = new RegExp(`^--(${Object.keys(vars).join("|")})-(.+)$`);
-  const computed = getComputedStyle(document.documentElement);
-  let colorPrimary = null, colorSecondary = null;
-  for (const prop of computed) {
-    if (prop == "--brand-color-primary") {
-      colorPrimary = cssColorToHSL(computed.getPropertyValue(prop));
-    } else if (prop == "--brand-color-secondary") {
-      colorSecondary = cssColorToHSL(computed.getPropertyValue(prop));
-      continue;
-    } else {
-      const [, context, varname] = prop.match(propertyRx) || [];
-      if (context && varname) {
-        vars[context][varname] = computed.getPropertyValue(prop).trim();
+  function makeVars(name, prefix, postfix) {
+    const layer = [prefix];
+    for (let i = 1; i <= TIERS; i++) {
+      let push = prop => {
+        layer.push(`    --${prop}${i}: var(--${name}-${prop}${i});`)
       }
+      push('bgc');
+      push('bc');
+      push('bw');
+      push('br');
+      push('hc');
+      push('hw');
+      push('hs');
+      push('tc');
+      push('tw');
+      push('ts');
+      push('p');
+      push('m');
+      push('g');
     }
+    layer.push(postfix);
+    return layer;
   }
 
-  if (!colorPrimary) {
-    colorPrimary = cssColorToHSL("#aaaaaa");
-  }
-  if (!colorSecondary) {
-    colorSecondary = cssColorToHSL("#555555");
-  }
-
-  const style = document.documentElement.style;
-  style.setProperty("--color-primary", `hsl(${colorPrimary.h}, ${colorPrimary.s}%, ${colorPrimary.l}%)`);
-  style.setProperty("--color-secondary", `hsl(${colorSecondary.h}, ${colorSecondary.s}%, ${colorSecondary.l}%)`);
-
-  function setRange(varName, range) {
-    for (const [index, value] of range.entries()) {
-      style.setProperty(`--${varName}${index+1}`, value);
-    }
-  }
-
-  // Background colors
-  setRange(
-    'bgcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: colorPrimary.s/2, l: colorPrimary.l + (100 - colorPrimary.l)/1.5}, 
-      {h:colorPrimary.h, s: Math.min(colorPrimary.s/2, 5), l: 97},
-      6
-    )
-  );
-  setRange(
-    'ibgcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: colorPrimary.s/2, l: 3}, 
-      {h:colorPrimary.h, s: Math.min(colorPrimary.s/2, 5), l: colorPrimary.l / 1.5 },
-      6
-    )
-  );
-  setRange(
-    'bgcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: colorSecondary.s/2, l: colorSecondary.l + (100 - colorSecondary.l)/1.5}, 
-      {h:colorSecondary.h, s: Math.min(colorSecondary.s/2, 5), l: 97},
-      6
-    )
-  );
-  setRange(
-    'ibgcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: colorSecondary.s/2, l: 3}, 
-      {h:colorSecondary.h, s: Math.min(colorSecondary.s/2, 5), l: colorSecondary.l / 1.5 },
-      6
-    )
-  );
-
-  // Borders
-  setRange('bw', makeRange(3/16, 1/16, 6, 'rem'));
-  setRange('br', makeRange(20/16, 5/16, 6, 'rem'));
-  setRange(
-    'bcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: colorPrimary.s, l: colorPrimary.l}, 
-      {h:colorPrimary.h, s: Math.min(colorPrimary.s, 5), l: colorPrimary.l + (100 - colorPrimary.l)/1.5},
-      6
-    )
-  );
-  setRange(
-    'ibcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: colorPrimary.s, l: colorPrimary.l / 1.5}, 
-      {h:colorPrimary.h, s: Math.min(colorPrimary.s, 5), l: colorPrimary.l},
-      6
-    )
-  );
-  setRange(
-    'bcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: colorSecondary.s, l: colorSecondary.l}, 
-      {h:colorSecondary.h, s: Math.min(colorSecondary.s, 5), l: colorSecondary.l + (100 - colorSecondary.l)/1.5},
-      6
-    )
-  );
-  setRange(
-    'ibcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: colorSecondary.s, l: colorSecondary.l / 1.5}, 
-      {h:colorSecondary.h, s: Math.min(colorSecondary.s, 5), l: colorSecondary.l},
-      6
-    )
-  );
-
-  // Headings
-  setRange('fhs', makeRange(3, .75, 6, 'rem'));
-  setRange(
-    'fhcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: colorPrimary.s, l: colorPrimary.l}, 
-      {h: colorPrimary.h, s: colorPrimary.s/2, l: colorPrimary.l/2},
-      6
-    )
-  );
-  setRange(
-    'ifhcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: colorPrimary.s, l: colorPrimary.l}, 
-      {h: colorPrimary.h, s: colorPrimary.s/2, l: colorPrimary.l + (100 - colorPrimary.l) / 2},
-      6
-    )
-  );
-  setRange(
-    'fhcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: colorSecondary.s, l: colorSecondary.l}, 
-      {h: colorSecondary.h, s: colorSecondary.s/2, l: colorSecondary.l/2},
-      6
-    )
-  );
-  setRange(
-    'ifhcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: colorSecondary.s, l: colorSecondary.l}, 
-      {h: colorSecondary.h, s: colorSecondary.s/2, l: colorSecondary.l + (100 - colorSecondary.l) / 2},
-      6
-    )
-  );
-
-  // body text
-  setRange('fts', makeRange(2, .75, 6, 'rem'));
-  setRange(
-    'ftcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: Math.min(colorPrimary.s, 5), l: Math.max(colorPrimary.l/1.5, 5)}, 
-      {h:colorPrimary.h, s: Math.max(colorPrimary.s/4, 25), l: colorPrimary.l + (100 - colorPrimary.l)/2},
-      6
-    )
-  );
-  setRange(
-    'iftcp',
-    makeColorRange(
-      {h: colorPrimary.h, s: Math.min(colorPrimary.s, 5), l: Math.min(colorPrimary.l + (100 - colorPrimary.l)/1.5, 95)}, 
-      {h:colorPrimary.h, s: Math.max(colorPrimary.s/4, 25), l: colorPrimary.l + (100 - colorPrimary.l)/2},
-      6
-    )
-  );
-  setRange(
-    'ftcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: Math.min(colorSecondary.s, 5), l: Math.max(colorSecondary.l/1.5, 5)}, 
-      {h:colorSecondary.h, s: Math.max(colorSecondary.s/4, 25), l: colorSecondary.l + (100 - colorSecondary.l)/2},
-      6
-    )
-  );
-  setRange(
-    'iftcs',
-    makeColorRange(
-      {h: colorSecondary.h, s: Math.min(colorSecondary.s, 5), l: Math.min(colorSecondary.l + (100 - colorSecondary.l)/1.5, 95)}, 
-      {h: colorSecondary.h, s: Math.max(colorSecondary.s/4, 25), l: colorSecondary.l + (100 - colorSecondary.l)/2},
-      6
-    )
-  );
-
-  // Spacing
-  setRange('space', makeRange(3, .5, 6, 'rem'));
-
-  addStyles(document.querySelectorAll("[class]"));
-  const observer = new MutationObserver((mutationList, observer) => {
-    for (const mutation of mutationList) {
-      if (mutation.type == "childList") {
-        for (const node of mutation.addedNodes) {
-          if (node instanceof HTMLElement) {
-            if (node.className) {
-              addStyles([node]);
-            }
-            addStyles(node.querySelectorAll("[class]"));
-          }
-        }
-      } else if (mutation.type == "attributes" && mutation.attributeName == "class") {
-        addStyles([mutation.target]);
+  function makeLayer(name, prefix) {
+    const layer = [];
+    layer.push(`@layer ${name} {`);
+    for (let i = 1; i <= TIERS; i++) {
+      const bg = `var(--${prefix}bgc${i})`;
+      const bc = `var(--${prefix}bc${i})`;
+      const bw = `var(--${prefix}bw${i})`;
+      const br = `var(--${prefix}br${i})`;
+      const hc = `var(--${prefix}hc${i})`;
+      const hw = `var(--${prefix}hw${i})`;
+      const hs = `var(--${prefix}hs${i})`;
+      const tc = `var(--${prefix}tc${i})`;
+      const tw = `var(--${prefix}tw${i})`;
+      const ts = `var(--${prefix}ts${i})`;
+      const p = `var(--${prefix}p${i})`;
+      const m = `var(--${prefix}m${i})`;
+      const g = `var(--${prefix}g${i})`;
+  
+      let push = (prop, dir, rule) => {
+        layer.push(`  .${prefix}${prop}${i}${dir} { ${rule} }`);
       }
+      push('bg',  '',   `background-color: ${bg};`);
+      push('bgc', '',   `background-color: ${bg};`);
+      push('b',   '',   `border-color: ${bc}; border-width: ${bw}; border-radius: ${br};`);
+      push('bc',  '',   `border-color: ${bc};`);
+      push('bw',  '',   `border-width: ${bw};`);
+      push('br',  '',   `border-radius: ${br};`);
+      push('b', '-t',   `border-top-color: ${bc}; border-top-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br};`);
+      push('b', '-r',   `border-right-color: ${bc}; border-right-width: ${bw}; border-top-right-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('b', '-b',   `border-bottom-color: ${bc}; border-bottom-width: ${bw}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('b', '-l',   `border-left-color: ${bc}; border-left-width: ${bw}; border-top-left-radius: ${br}; border-bottom-left-radius: ${br};`);
+      push('b', '-vt',  `border-top-color: ${bc}; border-bottom-color: ${bc}; border-top-width: ${bw}; border-bottom-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('b', '-hz',  `border-left-color: ${bc}; border-right-color: ${bc}; border-left-width: ${bw}; border-right-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('b', '-tl',  `border-top-color: ${bc}; border-left-color: ${bc}; border-top-width: ${bw}; border-left-width: ${bw}; border-top-left-radius: ${br};`);
+      push('b', '-tr',  `border-top-color: ${bc}; border-right-color: ${bc}; border-top-width: ${bw}; border-right-width: ${bw}; border-top-right-radius: ${br};`);
+      push('b', '-bl',  `border-bottom-color: ${bc}; border-left-color: ${bc}; border-bottom-width: ${bw}; border-left-width: ${bw}; border-bottom-left-radius: ${br};`);
+      push('b', '-br',  `border-bottom-color: ${bc}; border-right-color: ${bc}; border-bottom-width: ${bw}; border-right-width: ${bw}; border-bottom-right-radius: ${br};`);
+      push('bc', '-t',  `border-top-color: ${bc};`);
+      push('bc', '-r',  `border-right-color: ${bc};`);
+      push('bc', '-b',  `border-bottom-color: ${bc};`);
+      push('bc', '-l',  `border-left-color: ${bc};`);
+      push('bc', '-vt', `border-top-color: ${bc}; border-bottom-color: ${bc};`);
+      push('bc', '-hz', `border-left-color: ${bc}; border-right-color: ${bc};`);
+      push('bc', '-tl', `border-top-color: ${bc}; border-left-color: ${bc};`);
+      push('bc', '-tr', `border-top-color: ${bc}; border-right-color: ${bc};`);
+      push('bc', '-bl', `border-bottom-color: ${bc}; border-left-color: ${bc};`);
+      push('bc', '-br', `border-bottom-color: ${bc}; border-right-color: ${bc};`);
+      push('bw', '-t',  `border-top-width: ${bw};`);
+      push('bw', '-r',  `border-right-width: ${bw};`);
+      push('bw', '-b',  `border-bottom-width: ${bw};`);
+      push('bw', '-l',  `border-left-width: ${bw};`);
+      push('bw', '-vt', `border-top-width: ${bw}; border-bottom-width: ${bw};`);
+      push('bw', '-hz', `border-left-width: ${bw}; border-right-width: ${bw};`);
+      push('bw', '-tl', `border-top-width: ${bw}; border-left-width: ${bw};`);
+      push('bw', '-tr', `border-top-width: ${bw}; border-right-width: ${bw};`);
+      push('bw', '-bl', `border-bottom-width: ${bw}; border-left-width: ${bw};`);
+      push('bw', '-br', `border-bottom-width: ${bw}; border-right-width: ${bw};`);
+      push('br', '-t',  `border-top-left-radius: ${br}; border-top-right-radius: ${br};`);
+      push('br', '-r',  `border-top-right-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('br', '-b',  `border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('br', '-l',  `border-top-left-radius: ${br}; border-bottom-left-radius: ${br};`);
+      push('br', '-vt', `border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('br', '-hz', `border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+      push('br', '-tl', `border-top-left-radius: ${br};`);
+      push('br', '-tr', `border-top-right-radius: ${br};`);
+      push('br', '-bl', `border-bottom-left-radius: ${br};`);
+      push('br', '-br', `border-bottom-right-radius: ${br};`);
+      push('h',  '',    `color: ${hc}; font-weight: ${hw}; font-size: ${hs};`);
+      push('hw', '',    `font-weight: ${hw};`);
+      push('hs', '',    `font-size: ${hs};`);
+      push('t',  '',    `color: ${tc}; font-weight: ${tw}; font-size: ${ts};`);
+      push('tw', '',    `font-weight: ${tw};`);
+      push('ts', '',    `font-size: ${ts};`);
+      push('p',  '',    `padding: ${p};`);
+      push('m',  '',    `margin: ${m};`);
+      push('g',  '',    `gap: ${g};`);
+      push('row', '',   `display: flex; flex-direction: row; gap: ${g};`);
+      push('col', '',   `display: flex; flex-direction: column; gap: ${g};`);
+      push('outline', '', `outline-color: ${bc}; outline-width: ${bw}; outline-offset: 0px; outline-style: solid;`);
     }
-  });
-  observer.observe(document, { attributes: true, childList: true, subtree: true });
-
-  function addStyles(elements) {
-    for (const el of elements) {
-      for (const className of el.classList) { 
-        if (!generatedRules.has(className)) {
-          const rules = generateRules(className);
-          for (const rule of rules) {
-            insertRule(`${rule.selector} { ${rule.propsText} }`);
-          }
-          generatedRules.add(className);
-        }
-      }
-    }
-  }
-
-  function generateRules(className, rootSelector) {
-    let modifiers = className.split(":").reverse();
-    const branchIdentifier = modifiers.shift();
-    let [, siblingClasses, identifier] = branchIdentifier.match(/^(.*?)\.([^.]+)$/) || [];
-
-    let selector = rootSelector || `.${className.replace(/[:.#%]/g, c => `\\${c}`)}`;
-    if (siblingClasses) {
-      selector = `.${siblingClasses}${selector}`;
-    } else {
-      identifier = branchIdentifier;
-    }
-    if (modifiers.includes("hover")) {
-      selector += ":hover";
-      modifiers = modifiers.filter((m) => m != "hover");
-    }
-    if (modifiers.length) {
-      selector = `.${modifiers.join(" .")} ${selector}`;
-    }
-
-    if (staticMap[identifier]) {
-      return [{ selector, propsText: staticMap[identifier]}];
-    }
-
-    if (vars["class"][identifier]) {
-      const subclasses = vars["class"][identifier].split(/\s+/);
-      const rules = [];
-      for (const subclass of subclasses) {
-        rules.push.apply(rules, generateRules(subclass, rootSelector||selector));
-      }
-      return rules;
-    }
-
-    const [, cls, varname] = identifier.match(/^([^-]+)-(.+)$/) || [];
-    const desc = dynClassPropMap[cls];
-    if (!desc) {
-      if (selector.indexOf(":hover") > 0) {
-        console.warn(`${className} - hover: applied to unrecoginized class ${identifier} - ignoring`);
-      }
-      return [];
-    }
-
-    let type;
-    for (const t of desc.types) {
-      if (vars[t][varname]) {
-        type = t;
-        break;
-      }
-    }
-
-    let props;
-    if (type) {
-      props = typeMap[type][cls].map(p => `${p}: var(--${type}-${varname});`);
-    } else {
-      // if we don't find a matching var, use the varname as the value which allows people to put
-      // in values on-the-fly (e.g. w-400px). We'll use it in all possible properties, relying
-      // on the fact that the CSS engine will ignore invalid properties.
-      props = desc.props.map(p => `${p}: ${varname};`);
-    }
-
-    return [{selector, propsText: props.join(" ")}];
+    layer.push('}');
+    return layer;
   }
 
   function cssColorToHSL(color) {
+    if (!color) return null;
+
     color = color.trim().toLowerCase();
 
     if (color.startsWith("#")) {
@@ -501,8 +362,15 @@ f-:wrap,nowrap,wrap-reverse`;
     } else if (color.startsWith("hsl")) {
         return parseHSL(color);
     } else {
-        return [0, 0, 0];
+        return null;
     }
+  }
+
+  function cssColor(h, s, l) {
+    if (typeof h === "object") {
+        [h, s, l] = [h.h, h.s, h.l];
+    } 
+    return `hsl(${h}, ${s}%, ${l}%)`;
   }
 
   function parseHexRGB(hex) {
@@ -520,38 +388,38 @@ f-:wrap,nowrap,wrap-reverse`;
     const b = bigint & 255;
 
     return [r, g, b];
-}
+  }
 
-function makeRange(start, end, steps, unit = "") {
+  function makeRange(start, end, steps, unit = "") {
     const range = [];
     for (let i = 0; i < steps; i++) {
         range.push(`${start + (end - start) * i / (steps - 1)}${unit}`);
     }
     return range;
-}
+  }
 
-function makeColorRange(hsl1, hsl2, steps) {
+  function makeColorRange(hsl1, hsl2, steps) {
     const h1 = hsl1.h, s1 = hsl1.s, l1 = hsl1.l;
     const h2 = hsl2.h, s2 = hsl2.s, l2 = hsl2.l;
-
+    
     const hRange = makeRange(h1, h2, steps);
     const sRange = makeRange(s1, s2, steps);
     const lRange = makeRange(l1, l2, steps);
     const range = [];
     for (let i = 0; i < steps; i++) {
-        range.push(`hsl(${hRange[i]}, ${sRange[i]}%, ${lRange[i]}%)`);
+        range.push(cssColor(hRange[i], sRange[i], lRange[i]));
     }
     return range;
-}
+  }
 
-function parseRGB(rgb) {
-  const match = rgb.match(/rgb[a]?\((\d+),\s*(\d+),\s*(\d+)/i);
-  if (!match) return [0, 0, 0];
+  function parseRGB(rgb) {
+    const match = rgb.match(/rgb[a]?\((\d+),\s*(\d+),\s*(\d+)/i);
+    if (!match) return [0, 0, 0];
 
-  return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
-}
+    return [parseInt(match[1], 10), parseInt(match[2], 10), parseInt(match[3], 10)];
+  }
 
-function parseHSL(hsl) {
+  function parseHSL(hsl) {
     // Extract numbers from the HSL string
     const match = hsl.match(/hsl[a]?\((\d+),\s*([\d.]+)%,\s*([\d.]+)%/i);
     if (!match) return [0, 0, 0];
@@ -561,9 +429,9 @@ function parseHSL(hsl) {
         s: parseFloat(match[2]),
         l: parseFloat(match[3]),
     };
-}
+  }
 
-function rgbToHSL(r, g, b) {
+  function rgbToHSL(r, g, b) {
     r /= 255;
     g /= 255;
     b /= 255;
