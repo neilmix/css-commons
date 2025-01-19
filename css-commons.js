@@ -110,32 +110,19 @@
       css.push(`:root {`);
       for (let c of ["bgc", "bc", "hc", "tc"]) {
         for (let t = 0; t < TIERS; t++) {
-          css.push(`  --theme-${this.name}-light-${c}${t+1}: ${this[c].light.range[t]};`);
+          css.push(`  --${this.name}-light-${c}${t+1}: ${this[c].light.range[t]};`);
         }
         for (let t = 0; t < TIERS; t++) {
-          css.push(`  --theme-${this.name}-dark-${c}${t+1}: ${this[c].dark.range[t]};`);
+          css.push(`  --${this.name}-dark-${c}${t+1}: ${this[c].dark.range[t]};`);
         }
       }
 
-      for (let n of ["bw", "br", "hs", "ts", "p", "m", "g"]) {
-        for (let t = 0; t < TIERS; t++) {
-          css.push(`  --theme-${this.name}-${n}${t+1}: ${this[n].range[t]};`);
-        }
-      }
-
-      for (let w of ["hw", "tw"]) {
-        for (let t = 0; t < TIERS; t++) {
-          css.push(`  --theme-${this.name}-${w}${t+1}: ${this[w].range[t]};`);
-        }
-      }
-      css.push(`}`);
-
-      css.push(`:root {`);
       for (let n of ["bw", "br", "hs", "ts", "p", "m", "g"]) {
         for (let t = 0; t < TIERS; t++) {
           css.push(`  --${this.name}-${n}${t+1}: ${this[n].range[t]};`);
         }
       }
+
       for (let w of ["hw", "tw"]) {
         for (let t = 0; t < TIERS; t++) {
           css.push(`  --${this.name}-${w}${t+1}: ${this[w].range[t]};`);
@@ -143,39 +130,37 @@
       }
       css.push(`}`);
 
-      const light = [];
-      for (let c of ["bgc", "bc", "hc", "tc"]) {
-        for (let t = 0; t < TIERS; t++) {
-          light.push(`  --${this.name}-${c}${t+1}: var(--theme-${this.name}-light-${c}${t+1});`);
+      const layer2 = [`@layer ${this.name}2 {`];
+      layer2.push(`  .${this.name} {`);
+      for (let i = 1; i <= TIERS; i++) {
+        let push = (prop, mode) => {
+          layer2.push(`    --${mode}${prop}${i}: var(--${this.name}-${mode}${prop}${i});`)
         }
+        push('bw', '');
+        push('br', '');
+        push('hw', '');
+        push('hs', '');
+        push('tw', '');
+        push('ts', '');
+        push('p', '');
+        push('m', '');
+        push('g', '');
+        push('bgc', 'light-');
+        push('bc', 'light-');
+        push('hc', 'light-');
+        push('tc', 'light-');
+        push('bgc', 'dark-');
+        push('bc', 'dark-');
+        push('hc', 'dark-');
+        push('tc', 'dark-');
+        layer2.push(`    --bgc${i}: var(--inverse-bgc${i}, var(--light-bgc${i}));`);
+        layer2.push(`    --bc${i}: var(--inverse-bc${i}, var(--light-bc${i}));`);
+        layer2.push(`    --hc${i}: var(--inverse-hc${i}, var(--light-hc${i}));`);
+        layer2.push(`    --tc${i}: var(--inverse-tc${i}, var(--light-tc${i}));`);
       }
-      const lightText = light.join("\n");
+      layer2.push(`  }`);
+      layer2.push(`}`);
 
-      const dark = [];
-      for (let c of ["bgc", "bc", "hc", "tc"]) {
-        for (let t = 0; t < TIERS; t++) {
-          dark.push(`  --${this.name}-${c}${t+1}: var(--theme-${this.name}-dark-${c}${t+1});`);
-        }
-      }
-      const darkText = dark.join("\n");
-
-      css.push(`.${this.name} {`);
-      css.push(`  ${lightText}`);
-      css.push(`}`);
-
-      for (let i = 0; i < 9; i++) {
-        const selector = `.${this.name} ` + Array(i+1).fill('.inverse').join(' ');
-        css.push(`${selector} {`);
-        if (i & 1) {
-          css.push(`  ${lightText}`);
-        } else {
-          css.push(`  ${darkText}`);
-        }
-        css.push(`}`);
-        css.push.apply(css, makeVars(this.name, `${selector} {`, `}`));
-      }
-
-      const layer2 = makeVars(this.name, `@layer ${this.name}2 { .${this.name} {`, `} }`);
       const layer3 = makeLayer(this.name, this.name + '-');
       return [...css, ...layer2, ...layer3].join("\n");
     }
@@ -200,10 +185,43 @@
   .center { display: grid; place-items: center; }
 
   .absent { display: none; opacity: 0; }
+
+  .cursor-default: { cursor: default; }
 }
 `;
 
   const layer1 = makeLayer('layer1', '');
+  const css = [baseCSS, ...layer1];
+
+  const light = [];
+  for (let c of ["bgc", "bc", "hc", "tc"]) {
+    for (let t = 0; t < TIERS; t++) {
+      light.push(`  --${c}${t+1}: var(--light-${c}${t+1});`);
+      light.push(`  --inverse-${c}${t+1}: var(--light-${c}${t+1});`);
+    }
+  }
+  const lightText = light.join("\n");
+
+  const dark = [];
+  for (let c of ["bgc", "bc", "hc", "tc"]) {
+    for (let t = 0; t < TIERS; t++) {
+      dark.push(`  --${c}${t+1}: var(--dark-${c}${t+1});`);
+      dark.push(`  --inverse-${c}${t+1}: var(--dark-${c}${t+1});`);
+    }
+  }
+  const darkText = dark.join("\n");
+
+  for (let i = 0; i < 9; i++) {
+    const selector = Array(i+1).fill('.inverse').join(' ');
+    css.push(`${selector} {`);
+    if (i & 1) {
+      css.push(`  ${lightText}`);
+    } else {
+      css.push(`  ${darkText}`);
+    }
+    css.push(`}`);
+  }
+
   const computed = getComputedStyle(document.documentElement);
   const themes = {};
   for (const prop of computed) {
@@ -217,7 +235,6 @@
     }
   }
   
-  const css = [baseCSS, layer1.join('\n')];
   for (const [themeName, config] of Object.entries(themes)) {
     if (!config.color) {
       console.error(`css-commons: Theme ${themeName} does not have a color defined.`);
@@ -240,30 +257,6 @@
 
   /* Helper functions */
 
-  function makeVars(name, prefix, postfix) {
-    const layer = [prefix];
-    for (let i = 1; i <= TIERS; i++) {
-      let push = prop => {
-        layer.push(`    --${prop}${i}: var(--${name}-${prop}${i});`)
-      }
-      push('bgc');
-      push('bc');
-      push('bw');
-      push('br');
-      push('hc');
-      push('hw');
-      push('hs');
-      push('tc');
-      push('tw');
-      push('ts');
-      push('p');
-      push('m');
-      push('g');
-    }
-    layer.push(postfix);
-    return layer;
-  }
-
   function makeLayer(name, prefix) {
     const layer = [];
     layer.push(`@layer ${name} {`);
@@ -282,8 +275,8 @@
       const m = `var(--${prefix}m${i})`;
       const g = `var(--${prefix}g${i})`;
   
-      let push = (prop, dir, rule) => {
-        layer.push(`  .${prefix}${prop}${i}${dir} { ${rule} }`);
+      let push = (prop, direction, rule) => {
+        layer.push(`  .${prefix}${prop}${i}${direction} { ${rule} }`);
       }
       push('bg',  '',   `background-color: ${bg};`);
       push('bgc', '',   `background-color: ${bg};`);

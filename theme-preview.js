@@ -18,12 +18,12 @@
         const tiers = 5;
 
         for (let mode of ['', 'inverse']) {
-            write(`<div class="row0 ${mode}">`);
+            write(`<div class="row0 ${theme} ${mode}">`);
             for (let i = 1; i <= tiers; i++) {
                 write(`
                     <div class="col0">
                         <span class="stretch"></span>
-                        <div class="${theme} col${i} bg${i}">
+                        <div class="col${i} bg${i}">
                             <div class="col${i} m${i} b${i} p${i}">
                                 <span class="h${i}">h${1}</span>
                                 <span class="t${i}">t${i}</span>
