@@ -53,8 +53,8 @@
     parseColor(config, name, ls, le, ds, de) {
       this[name] = {
         light: {
-          start: cssColorToHSL(config[`light-${name}-start`]) || ls,
-          end:   cssColorToHSL(config[`light-${name}-end`]) || le,
+          start: cssColorToHSL(config[`${name}-start`]) || ls,
+          end:   cssColorToHSL(config[`${name}-end`]) || le,
         },
         dark: {
           start: cssColorToHSL(config[`dark-${name}-start`]) || ds,
@@ -91,8 +91,8 @@
       css.push(`  --theme-${this.name}-color: ${cssColor(this.color)};`);
 
       for (let c of ["bgc", "bc", "hc", "tc"]) {
-        css.push(`  --theme-${this.name}-light-${c}-start: ${cssColor(this[c].light.start)};`);
-        css.push(`  --theme-${this.name}-light-${c}-end: ${cssColor(this[c].light.end)};`);
+        css.push(`  --theme-${this.name}-${c}-start: ${cssColor(this[c].light.start)};`);
+        css.push(`  --theme-${this.name}-${c}-end: ${cssColor(this[c].light.end)};`);
         css.push(`  --theme-${this.name}-dark-${c}-start: ${cssColor(this[c].dark.start)};`);
         css.push(`  --theme-${this.name}-dark-${c}-end: ${cssColor(this[c].dark.end)};`);
       }
@@ -105,12 +105,10 @@
       for (let w of ["hw", "tw"]) {
         css.push(`  --theme-${this.name}-${w}: ${this[w].range.join(" ")};`);
       }
-      css.push(`}`);
 
-      css.push(`:root {`);
       for (let c of ["bgc", "bc", "hc", "tc"]) {
         for (let t = 0; t < TIERS; t++) {
-          css.push(`  --${this.name}-light-${c}${t+1}: ${this[c].light.range[t]};`);
+          css.push(`  --${this.name}-${c}${t+1}: ${this[c].light.range[t]};`);
         }
         for (let t = 0; t < TIERS; t++) {
           css.push(`  --${this.name}-dark-${c}${t+1}: ${this[c].dark.range[t]};`);
@@ -131,38 +129,38 @@
       css.push(`}`);
 
       const layer2 = [`@layer ${this.name}2 {`];
-      layer2.push(`  .${this.name} {`);
-      for (let i = 1; i <= TIERS; i++) {
-        let push = (prop, mode) => {
-          layer2.push(`    --${mode}${prop}${i}: var(--${this.name}-${mode}${prop}${i});`)
+      let pushColors = mode => {
+        for (let i = 1; i <= TIERS; i++) {
+          for (let prop of ["bgc", "bc", "hc", "tc"]) {
+            layer2.push(`    --${prop}${i}: var(--${this.name}-${mode}${prop}${i});`)
+            layer2.push(`    --dark-${prop}${i}: var(--${this.name}-dark-${prop}${i});`)
+          }
         }
-        push('bw', '');
-        push('br', '');
-        push('hw', '');
-        push('hs', '');
-        push('tw', '');
-        push('ts', '');
-        push('p', '');
-        push('m', '');
-        push('g', '');
-        push('bgc', 'light-');
-        push('bc', 'light-');
-        push('hc', 'light-');
-        push('tc', 'light-');
-        push('bgc', 'dark-');
-        push('bc', 'dark-');
-        push('hc', 'dark-');
-        push('tc', 'dark-');
-        layer2.push(`    --bgc${i}: var(--inverse-bgc${i}, var(--light-bgc${i}));`);
-        layer2.push(`    --bc${i}: var(--inverse-bc${i}, var(--light-bc${i}));`);
-        layer2.push(`    --hc${i}: var(--inverse-hc${i}, var(--light-hc${i}));`);
-        layer2.push(`    --tc${i}: var(--inverse-tc${i}, var(--light-tc${i}));`);
       }
+      let pushProps = mode => {
+        for (let i = 1; i <= TIERS; i++) {
+          pushColors(mode);
+          for (let prop of ["bw", "br", "hs", "ts", "p", "m", "g", "hw", "tw"]) {
+            layer2.push(`    --${prop}${i}: var(--${this.name}-${prop}${i});`)
+          }
+        }
+      }
+      layer2.push(`  .${this.name}, .${this.name}.light, .${this.name} .light {`);
+      pushProps('');
+      layer2.push(`  }`);
+      layer2.push(`  .${this.name}.dark, .${this.name} .dark {`);
+      pushColors('dark-');
       layer2.push(`  }`);
       layer2.push(`}`);
 
-      const layer3 = makeLayer(this.name, this.name + '-');
-      return [...css, ...layer2, ...layer3].join("\n");
+      const layer3 = makeLayerClasses(this.name + '-');
+      return [
+        ...css, 
+        ...layer2, 
+        `@layer ${this.name} {`,
+        ...layer3, 
+        `}`,
+      ].join("\n");
     }
   }
   
@@ -183,44 +181,20 @@
   .outline0 { outline-width: 0; }
   .stretch { flex-grow: 1; }
   .center { display: grid; place-items: center; }
-
+  .center[display="flex"] { display: flex; place-items: center; }
   .absent { display: none; opacity: 0; }
 
-  .cursor-default: { cursor: default; }
+  .cursor-default { cursor: default; }
 }
 `;
 
-  const layer1 = makeLayer('layer1', '');
-  const css = [baseCSS, ...layer1];
-
-  const light = [];
-  for (let c of ["bgc", "bc", "hc", "tc"]) {
-    for (let t = 0; t < TIERS; t++) {
-      light.push(`  --${c}${t+1}: var(--light-${c}${t+1});`);
-      light.push(`  --inverse-${c}${t+1}: var(--light-${c}${t+1});`);
-    }
-  }
-  const lightText = light.join("\n");
-
-  const dark = [];
-  for (let c of ["bgc", "bc", "hc", "tc"]) {
-    for (let t = 0; t < TIERS; t++) {
-      dark.push(`  --${c}${t+1}: var(--dark-${c}${t+1});`);
-      dark.push(`  --inverse-${c}${t+1}: var(--dark-${c}${t+1});`);
-    }
-  }
-  const darkText = dark.join("\n");
-
-  for (let i = 0; i < 9; i++) {
-    const selector = Array(i+1).fill('.inverse').join(' ');
-    css.push(`${selector} {`);
-    if (i & 1) {
-      css.push(`  ${lightText}`);
-    } else {
-      css.push(`  ${darkText}`);
-    }
-    css.push(`}`);
-  }
+  const layer1 = makeLayerClasses('');
+  const css = [
+    baseCSS, 
+    '@layer layer1 {',
+    ...layer1,
+    '}',
+  ];
 
   const computed = getComputedStyle(document.documentElement);
   const themes = {};
@@ -257,87 +231,90 @@
 
   /* Helper functions */
 
-  function makeLayer(name, prefix) {
+  function makeLayerClasses(prefix) {
     const layer = [];
-    layer.push(`@layer ${name} {`);
-    for (let i = 1; i <= TIERS; i++) {
-      const bg = `var(--${prefix}bgc${i})`;
-      const bc = `var(--${prefix}bc${i})`;
-      const bw = `var(--${prefix}bw${i})`;
-      const br = `var(--${prefix}br${i})`;
-      const hc = `var(--${prefix}hc${i})`;
-      const hw = `var(--${prefix}hw${i})`;
-      const hs = `var(--${prefix}hs${i})`;
-      const tc = `var(--${prefix}tc${i})`;
-      const tw = `var(--${prefix}tw${i})`;
-      const ts = `var(--${prefix}ts${i})`;
-      const p = `var(--${prefix}p${i})`;
-      const m = `var(--${prefix}m${i})`;
-      const g = `var(--${prefix}g${i})`;
-  
-      let push = (prop, direction, rule) => {
-        layer.push(`  .${prefix}${prop}${i}${direction} { ${rule} }`);
+    const pushClasses = mode => {
+      for (let i = 1; i <= TIERS; i++) {
+        const bg = `var(--${prefix}${mode}bgc${i})`;
+        const bc = `var(--${prefix}${mode}bc${i})`;
+        const hc = `var(--${prefix}${mode}hc${i})`;
+        const tc = `var(--${prefix}${mode}tc${i})`;
+        const bw = `var(--${prefix}bw${i})`;
+        const br = `var(--${prefix}br${i})`;
+        const hw = `var(--${prefix}hw${i})`;
+        const hs = `var(--${prefix}hs${i})`;
+        const tw = `var(--${prefix}tw${i})`;
+        const ts = `var(--${prefix}ts${i})`;
+        const p = `var(--${prefix}p${i})`;
+        const m = `var(--${prefix}m${i})`;
+        const g = `var(--${prefix}g${i})`;
+    
+        let push = (prop, direction, rule) => {
+          layer.push(`  .${prefix}${mode}${prop}${i}${direction} { ${rule} }`);
+        }
+        push('bg',  '',   `background-color: ${bg};`);
+        push('bg',  '',   `background-color: ${bg};`);
+        push('bgc', '',   `background-color: ${bg};`);
+        push('b',   '',   `border-color: ${bc}; border-width: ${bw}; border-radius: ${br};`);
+        push('bc',  '',   `border-color: ${bc};`);
+        push('bw',  '',   `border-width: ${bw};`);
+        push('br',  '',   `border-radius: ${br};`);
+        push('b', '-t',   `border-top-color: ${bc}; border-top-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br};`);
+        push('b', '-r',   `border-right-color: ${bc}; border-right-width: ${bw}; border-top-right-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('b', '-b',   `border-bottom-color: ${bc}; border-bottom-width: ${bw}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('b', '-l',   `border-left-color: ${bc}; border-left-width: ${bw}; border-top-left-radius: ${br}; border-bottom-left-radius: ${br};`);
+        push('b', '-vt',  `border-top-color: ${bc}; border-bottom-color: ${bc}; border-top-width: ${bw}; border-bottom-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('b', '-hz',  `border-left-color: ${bc}; border-right-color: ${bc}; border-left-width: ${bw}; border-right-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('b', '-tl',  `border-top-color: ${bc}; border-left-color: ${bc}; border-top-width: ${bw}; border-left-width: ${bw}; border-top-left-radius: ${br};`);
+        push('b', '-tr',  `border-top-color: ${bc}; border-right-color: ${bc}; border-top-width: ${bw}; border-right-width: ${bw}; border-top-right-radius: ${br};`);
+        push('b', '-bl',  `border-bottom-color: ${bc}; border-left-color: ${bc}; border-bottom-width: ${bw}; border-left-width: ${bw}; border-bottom-left-radius: ${br};`);
+        push('b', '-br',  `border-bottom-color: ${bc}; border-right-color: ${bc}; border-bottom-width: ${bw}; border-right-width: ${bw}; border-bottom-right-radius: ${br};`);
+        push('bc', '-t',  `border-top-color: ${bc};`);
+        push('bc', '-r',  `border-right-color: ${bc};`);
+        push('bc', '-b',  `border-bottom-color: ${bc};`);
+        push('bc', '-l',  `border-left-color: ${bc};`);
+        push('bc', '-vt', `border-top-color: ${bc}; border-bottom-color: ${bc};`);
+        push('bc', '-hz', `border-left-color: ${bc}; border-right-color: ${bc};`);
+        push('bc', '-tl', `border-top-color: ${bc}; border-left-color: ${bc};`);
+        push('bc', '-tr', `border-top-color: ${bc}; border-right-color: ${bc};`);
+        push('bc', '-bl', `border-bottom-color: ${bc}; border-left-color: ${bc};`);
+        push('bc', '-br', `border-bottom-color: ${bc}; border-right-color: ${bc};`);
+        push('bw', '-t',  `border-top-width: ${bw};`);
+        push('bw', '-r',  `border-right-width: ${bw};`);
+        push('bw', '-b',  `border-bottom-width: ${bw};`);
+        push('bw', '-l',  `border-left-width: ${bw};`);
+        push('bw', '-vt', `border-top-width: ${bw}; border-bottom-width: ${bw};`);
+        push('bw', '-hz', `border-left-width: ${bw}; border-right-width: ${bw};`);
+        push('bw', '-tl', `border-top-width: ${bw}; border-left-width: ${bw};`);
+        push('bw', '-tr', `border-top-width: ${bw}; border-right-width: ${bw};`);
+        push('bw', '-bl', `border-bottom-width: ${bw}; border-left-width: ${bw};`);
+        push('bw', '-br', `border-bottom-width: ${bw}; border-right-width: ${bw};`);
+        push('br', '-t',  `border-top-left-radius: ${br}; border-top-right-radius: ${br};`);
+        push('br', '-r',  `border-top-right-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('br', '-b',  `border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('br', '-l',  `border-top-left-radius: ${br}; border-bottom-left-radius: ${br};`);
+        push('br', '-vt', `border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('br', '-hz', `border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
+        push('br', '-tl', `border-top-left-radius: ${br};`);
+        push('br', '-tr', `border-top-right-radius: ${br};`);
+        push('br', '-bl', `border-bottom-left-radius: ${br};`);
+        push('br', '-br', `border-bottom-right-radius: ${br};`);
+        push('h',  '',    `color: ${hc}; font-weight: ${hw}; font-size: ${hs};`);
+        push('hw', '',    `font-weight: ${hw};`);
+        push('hs', '',    `font-size: ${hs};`);
+        push('t',  '',    `color: ${tc}; font-weight: ${tw}; font-size: ${ts};`);
+        push('tw', '',    `font-weight: ${tw};`);
+        push('ts', '',    `font-size: ${ts};`);
+        push('p',  '',    `padding: ${p};`);
+        push('m',  '',    `margin: ${m};`);
+        push('g',  '',    `gap: ${g};`);
+        push('row', '',   `display: flex; flex-direction: row; gap: ${g};`);
+        push('col', '',   `display: flex; flex-direction: column; gap: ${g};`);
+        push('outline', '', `outline-color: ${bc}; outline-width: ${bw}; outline-offset: 0px; outline-style: solid;`);
       }
-      push('bg',  '',   `background-color: ${bg};`);
-      push('bgc', '',   `background-color: ${bg};`);
-      push('b',   '',   `border-color: ${bc}; border-width: ${bw}; border-radius: ${br};`);
-      push('bc',  '',   `border-color: ${bc};`);
-      push('bw',  '',   `border-width: ${bw};`);
-      push('br',  '',   `border-radius: ${br};`);
-      push('b', '-t',   `border-top-color: ${bc}; border-top-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br};`);
-      push('b', '-r',   `border-right-color: ${bc}; border-right-width: ${bw}; border-top-right-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('b', '-b',   `border-bottom-color: ${bc}; border-bottom-width: ${bw}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('b', '-l',   `border-left-color: ${bc}; border-left-width: ${bw}; border-top-left-radius: ${br}; border-bottom-left-radius: ${br};`);
-      push('b', '-vt',  `border-top-color: ${bc}; border-bottom-color: ${bc}; border-top-width: ${bw}; border-bottom-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('b', '-hz',  `border-left-color: ${bc}; border-right-color: ${bc}; border-left-width: ${bw}; border-right-width: ${bw}; border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('b', '-tl',  `border-top-color: ${bc}; border-left-color: ${bc}; border-top-width: ${bw}; border-left-width: ${bw}; border-top-left-radius: ${br};`);
-      push('b', '-tr',  `border-top-color: ${bc}; border-right-color: ${bc}; border-top-width: ${bw}; border-right-width: ${bw}; border-top-right-radius: ${br};`);
-      push('b', '-bl',  `border-bottom-color: ${bc}; border-left-color: ${bc}; border-bottom-width: ${bw}; border-left-width: ${bw}; border-bottom-left-radius: ${br};`);
-      push('b', '-br',  `border-bottom-color: ${bc}; border-right-color: ${bc}; border-bottom-width: ${bw}; border-right-width: ${bw}; border-bottom-right-radius: ${br};`);
-      push('bc', '-t',  `border-top-color: ${bc};`);
-      push('bc', '-r',  `border-right-color: ${bc};`);
-      push('bc', '-b',  `border-bottom-color: ${bc};`);
-      push('bc', '-l',  `border-left-color: ${bc};`);
-      push('bc', '-vt', `border-top-color: ${bc}; border-bottom-color: ${bc};`);
-      push('bc', '-hz', `border-left-color: ${bc}; border-right-color: ${bc};`);
-      push('bc', '-tl', `border-top-color: ${bc}; border-left-color: ${bc};`);
-      push('bc', '-tr', `border-top-color: ${bc}; border-right-color: ${bc};`);
-      push('bc', '-bl', `border-bottom-color: ${bc}; border-left-color: ${bc};`);
-      push('bc', '-br', `border-bottom-color: ${bc}; border-right-color: ${bc};`);
-      push('bw', '-t',  `border-top-width: ${bw};`);
-      push('bw', '-r',  `border-right-width: ${bw};`);
-      push('bw', '-b',  `border-bottom-width: ${bw};`);
-      push('bw', '-l',  `border-left-width: ${bw};`);
-      push('bw', '-vt', `border-top-width: ${bw}; border-bottom-width: ${bw};`);
-      push('bw', '-hz', `border-left-width: ${bw}; border-right-width: ${bw};`);
-      push('bw', '-tl', `border-top-width: ${bw}; border-left-width: ${bw};`);
-      push('bw', '-tr', `border-top-width: ${bw}; border-right-width: ${bw};`);
-      push('bw', '-bl', `border-bottom-width: ${bw}; border-left-width: ${bw};`);
-      push('bw', '-br', `border-bottom-width: ${bw}; border-right-width: ${bw};`);
-      push('br', '-t',  `border-top-left-radius: ${br}; border-top-right-radius: ${br};`);
-      push('br', '-r',  `border-top-right-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('br', '-b',  `border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('br', '-l',  `border-top-left-radius: ${br}; border-bottom-left-radius: ${br};`);
-      push('br', '-vt', `border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('br', '-hz', `border-top-left-radius: ${br}; border-top-right-radius: ${br}; border-bottom-left-radius: ${br}; border-bottom-right-radius: ${br};`);
-      push('br', '-tl', `border-top-left-radius: ${br};`);
-      push('br', '-tr', `border-top-right-radius: ${br};`);
-      push('br', '-bl', `border-bottom-left-radius: ${br};`);
-      push('br', '-br', `border-bottom-right-radius: ${br};`);
-      push('h',  '',    `color: ${hc}; font-weight: ${hw}; font-size: ${hs};`);
-      push('hw', '',    `font-weight: ${hw};`);
-      push('hs', '',    `font-size: ${hs};`);
-      push('t',  '',    `color: ${tc}; font-weight: ${tw}; font-size: ${ts};`);
-      push('tw', '',    `font-weight: ${tw};`);
-      push('ts', '',    `font-size: ${ts};`);
-      push('p',  '',    `padding: ${p};`);
-      push('m',  '',    `margin: ${m};`);
-      push('g',  '',    `gap: ${g};`);
-      push('row', '',   `display: flex; flex-direction: row; gap: ${g};`);
-      push('col', '',   `display: flex; flex-direction: column; gap: ${g};`);
-      push('outline', '', `outline-color: ${bc}; outline-width: ${bw}; outline-offset: 0px; outline-style: solid;`);
     }
-    layer.push('}');
+    pushClasses('');
+    pushClasses('dark-');
     return layer;
   }
 

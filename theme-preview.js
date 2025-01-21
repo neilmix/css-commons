@@ -17,7 +17,7 @@
         const get = (str) => computed.getPropertyValue(varname(str)).trim();
         const tiers = 5;
 
-        for (let mode of ['', 'inverse']) {
+        for (let mode of ['', 'dark']) {
             write(`<div class="row0 ${theme} ${mode}">`);
             for (let i = 1; i <= tiers; i++) {
                 write(`
