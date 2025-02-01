@@ -25,7 +25,7 @@
                         <span class="stretch"></span>
                         <div class="col${i} bg${i}">
                             <div class="col${i} m${i} b${i} p${i}">
-                                <span class="h${i}">h${1}</span>
+                                <span class="h${i}">h${i}</span>
                                 <span class="t${i}">t${i}</span>
                             </div>
                         </div>

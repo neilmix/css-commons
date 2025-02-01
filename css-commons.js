@@ -128,37 +128,43 @@
       }
       css.push(`}`);
 
-      const layer2 = [`@layer ${this.name}2 {`];
-      let pushColors = mode => {
-        for (let i = 1; i <= TIERS; i++) {
-          for (let prop of ["bgc", "bc", "hc", "tc"]) {
-            layer2.push(`    --${prop}${i}: var(--${this.name}-${mode}${prop}${i});`)
-            layer2.push(`    --dark-${prop}${i}: var(--${this.name}-dark-${prop}${i});`)
+      const makeColors = (index, lightClasses, darkClasses) => {
+        const layer = [`@layer layer${index} /* ${this.name} */ {`];
+        let pushColors = mode => {
+          for (let i = 1; i <= TIERS; i++) {
+            for (let prop of ["bgc", "bc", "hc", "tc"]) {
+              layer.push(`    --${prop}${i}: var(--${this.name}-${mode}${prop}${i});`)
+              layer.push(`    --dark-${prop}${i}: var(--${this.name}-dark-${prop}${i});`)
+            }
           }
         }
-      }
-      let pushProps = mode => {
-        for (let i = 1; i <= TIERS; i++) {
-          pushColors(mode);
-          for (let prop of ["bw", "br", "hs", "ts", "p", "m", "g", "hw", "tw"]) {
-            layer2.push(`    --${prop}${i}: var(--${this.name}-${prop}${i});`)
+        let pushProps = mode => {
+          for (let i = 1; i <= TIERS; i++) {
+            pushColors(mode);
+            for (let prop of ["bw", "br", "hs", "ts", "p", "m", "g", "hw", "tw"]) {
+              layer.push(`    --${prop}${i}: var(--${this.name}-${prop}${i});`)
+            }
           }
         }
+        layer.push(`  ${lightClasses} {`);
+        pushProps('');
+        layer.push(`  }`);
+        layer.push(`  ${darkClasses} {`);
+        pushColors('dark-');
+        layer.push(`  }`);
+        layer.push(`}`);
+        return layer;
       }
-      layer2.push(`  .${this.name}, .${this.name}.light, .${this.name} .light {`);
-      pushProps('');
-      layer2.push(`  }`);
-      layer2.push(`  .${this.name}.dark, .${this.name} .dark {`);
-      pushColors('dark-');
-      layer2.push(`  }`);
-      layer2.push(`}`);
 
-      const layer3 = makeLayerClasses(this.name + '-');
+      const layer2 = makeColors(2, `.${this.name} .light, .${this.name}`, `.${this.name} .dark`);
+      const layer3 = makeColors(3, `.${this.name}, .${this.name}.light, .${this.name}-light`, `.${this.name}.dark, .${this.name}-dark`);
+      const layer4 = makeLayerClasses(this.name + '-');
       return [
         ...css, 
         ...layer2, 
+        ...layer3,
         `@layer ${this.name} {`,
-        ...layer3, 
+        ...layer4, 
         `}`,
       ].join("\n");
     }
@@ -175,14 +181,21 @@
   table { border-collapse: collapse; border-spacing: 0; }
   * { border-width: 0px; box-sizing: border-box; transition-duration: 0.25s; transition-behavior: allow-discrete;}
   :not(:defined) { display: block; }
-
+  
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .grow { flex: 1; }
+  .center { display: grid; place-items: center; }
+  .top-center { display: grid; place-items: start center; }
+  .center  { place-items: center; }
+  .self-center { place-self: center; }
+  .absent { display: none; opacity: 0; }
+  .hidden { visibility: hidden; }
+  .block { display: block; }
+  .opacity0 { opacity: 0; }
+  .opacity1 { opacity: 1; }
   .row0 { display: flex; flex-direction: row; gap: 0; }
   .col0 { display: flex; flex-direction: column; gap: 0; }
-  .outline0 { outline-width: 0; }
-  .stretch { flex-grow: 1; }
-  .center { display: grid; place-items: center; }
-  .center[display="flex"] { display: flex; place-items: center; }
-  .absent { display: none; opacity: 0; }
 
   .cursor-default { cursor: default; }
 }
@@ -224,6 +237,12 @@
     const theme = new Theme(themeName, color, config);
     css.push(theme.toCSS());
   }
+
+  css.push(`@layer overrides {
+    .outline0 { outline-width: 0; }
+    .br0 { border-radius: 0; }
+    .b0 { border-width: 0; }
+  `);
 
   const el = document.createElement("style");
   el.textContent = css.join("\n");
@@ -302,9 +321,11 @@
         push('h',  '',    `color: ${hc}; font-weight: ${hw}; font-size: ${hs};`);
         push('hw', '',    `font-weight: ${hw};`);
         push('hs', '',    `font-size: ${hs};`);
+        push('hc', '',    `color: ${hc};`);
         push('t',  '',    `color: ${tc}; font-weight: ${tw}; font-size: ${ts};`);
         push('tw', '',    `font-weight: ${tw};`);
         push('ts', '',    `font-size: ${ts};`);
+        push('tc', '',    `color: ${tc};`);
         push('p',  '',    `padding: ${p};`);
         push('m',  '',    `margin: ${m};`);
         push('g',  '',    `gap: ${g};`);
