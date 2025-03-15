@@ -159,6 +159,7 @@
       const layer2 = makeColors(2, `.${this.name} .light, .${this.name}`, `.${this.name} .dark`);
       const layer3 = makeColors(3, `.${this.name}, .${this.name}.light, .${this.name}-light`, `.${this.name}.dark, .${this.name}-dark`);
       const layer4 = makeLayerClasses(this.name + '-');
+
       return [
         ...css, 
         ...layer2, 
@@ -171,35 +172,39 @@
   }
   
   const baseCSS = `
-@layer base {
-  * { margin: 0; padding: 0; border: 0; font-size: 16px; font: inherit; border-style: solid; border-width: 0;}
+    @layer base {
+      * { margin: 0; padding: 0; border: 0; font-size: 16px; font: inherit; border-style: solid; border-width: 0;}
 
-  body { line-height: 1; }
-  ol, ul { list-style: none; }
-  blockquote, q { quotes: none; }
-  blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
-  table { border-collapse: collapse; border-spacing: 0; }
-  * { border-width: 0px; box-sizing: border-box; transition-duration: 0.25s; transition-behavior: allow-discrete;}
-  :not(:defined) { display: block; }
-  
-  .relative { position: relative; }
-  .absolute { position: absolute; }
-  .grow { flex: 1; }
-  .center { display: grid; place-items: center; }
-  .top-center { display: grid; place-items: start center; }
-  .center  { place-items: center; }
-  .self-center { place-self: center; }
-  .absent { display: none; opacity: 0; }
-  .hidden { visibility: hidden; }
-  .block { display: block; }
-  .opacity0 { opacity: 0; }
-  .opacity1 { opacity: 1; }
-  .row0 { display: flex; flex-direction: row; gap: 0; }
-  .col0 { display: flex; flex-direction: column; gap: 0; }
-
-  .cursor-default { cursor: default; }
-}
-`;
+      body { line-height: 1; }
+      ol, ul { list-style: none; }
+      blockquote, q { quotes: none; }
+      blockquote:before, blockquote:after, q:before, q:after { content: ''; content: none; }
+      table { border-collapse: collapse; border-spacing: 0; }
+      * { border-width: 0px; box-sizing: border-box; transition-duration: 0.25s; transition-behavior: allow-discrete;}
+      :not(:defined) { display: block; }
+      
+      .relative { position: relative; }
+      .absolute { position: absolute; }
+      .grow { flex: 1; }
+      .center { display: grid; place-items: center; }
+      .top-center { display: grid; place-items: start center; }
+      .self-center { place-self: center; }
+      .center  { place-items: center; }
+      .row0 { display: flex; flex-direction: row; gap: 0; }
+      .col0 { display: flex; flex-direction: column; gap: 0; }
+      .absent { display: none; opacity: 0; }
+      .hidden { visibility: hidden; }
+      .block { display: block; }
+      .stick { position: sticky; }
+      .fixed { position: fixed; }
+      .opacity0 { opacity: 0; }
+      .opacity1 { opacity: 1; }
+      .nowrap { white-space: nowrap; }
+      .italic { font-style: italic; }
+      
+      .cursor-default { cursor: default; }
+    }
+    `;
 
   const layer1 = makeLayerClasses('');
   const css = [
@@ -211,17 +216,51 @@
 
   const computed = getComputedStyle(document.documentElement);
   const themes = {};
-  for (const prop of computed) {
-    if (prop.match(/^--theme-([^\-]+)-(.+)/)) {
-      const theme = RegExp.$1;
-      const varname = RegExp.$2;
-      if (!themes[theme]) {
-        themes[theme] = {};
+  for (const sheet of document.styleSheets) {
+    let rules;
+    try {
+      rules = sheet.cssRules;
+    } catch (error) {
+      // Skip stylesheets we can't access (e.g. cross-origin)
+      continue;
+    }
+    if (!rules) continue;
+
+    // Look for rules on the :root selector
+    for (const rule of rules) {
+      if (rule.selectorText && rule.selectorText.includes(':root')) {
+        const style = rule.style;
+        for (let i = 0; i < style.length; i++) {
+          const prop = style[i];
+          if (prop.match(/^--theme-([^\-]+)-(.+)/)) {
+            const theme = RegExp.$1;
+            const varname = RegExp.$2;
+            if (!themes[theme]) {
+              themes[theme] = {};
+            }
+            themes[theme][varname] = computed.getPropertyValue(prop).trim();
+          }
+        }
       }
-      themes[theme][varname] = computed.getPropertyValue(prop).trim();
     }
   }
-  
+
+  setTimeout(() => {
+    const computed = getComputedStyle(document.documentElement);
+    const themes = {};
+    for (const prop of computed) {
+      console.log(prop);
+      if (prop.match(/^--theme-([^\-]+)-(.+)/)) {
+        const theme = RegExp.$1;
+        const varname = RegExp.$2;
+        if (!themes[theme]) {
+          themes[theme] = {};
+        }
+        themes[theme][varname] = computed.getPropertyValue(prop).trim();
+      }
+    }
+  }, 1000);
+
   for (const [themeName, config] of Object.entries(themes)) {
     if (!config.color) {
       console.error(`css-commons: Theme ${themeName} does not have a color defined.`);
@@ -235,6 +274,7 @@
     }
 
     const theme = new Theme(themeName, color, config);
+    
     css.push(theme.toCSS());
   }
 
@@ -247,7 +287,7 @@
   const el = document.createElement("style");
   el.textContent = css.join("\n");
   document.head.appendChild(el);
-
+  
   /* Helper functions */
 
   function makeLayerClasses(prefix) {
@@ -327,7 +367,27 @@
         push('ts', '',    `font-size: ${ts};`);
         push('tc', '',    `color: ${tc};`);
         push('p',  '',    `padding: ${p};`);
+        push('p',  '-t',  `padding-top: ${p};`);
+        push('p',  '-r',  `padding-right: ${p};`);
+        push('p',  '-b',  `padding-bottom: ${p};`);
+        push('p',  '-l',  `padding-left: ${p};`);
+        push('p',  '-vt',  `padding-top: ${p}; padding-bottom: ${p};`);
+        push('p',  '-hz',  `padding-left: ${p}; padding-right: ${p};`);
+        push('p',  '-tl',  `padding-top: ${p}; padding-left: ${p};`);
+        push('p',  '-tr',  `padding-top: ${p}; padding-right: ${p};`);
+        push('p',  '-bl',  `padding-bottom: ${p}; padding-left: ${p};`);
+        push('p',  '-br',  `padding-bottom: ${p}; padding-right: ${p};`);
         push('m',  '',    `margin: ${m};`);
+        push('m',  '-t',  `margin-top: ${m};`);
+        push('m',  '-r',  `margin-right: ${m};`);
+        push('m',  '-b',  `margin-bottom: ${m};`);
+        push('m',  '-l',  `margin-left: ${m};`);
+        push('m',  '-vt',  `margin-top: ${m}; margin-bottom: ${m};`);
+        push('m',  '-hz',  `margin-left: ${m}; margin-right: ${m};`);
+        push('m',  '-tl',  `margin-top: ${m}; margin-left: ${m};`);
+        push('m',  '-tr',  `margin-top: ${m}; margin-right: ${m};`);
+        push('m',  '-bl',  `margin-bottom: ${m}; margin-left: ${m};`);
+        push('m',  '-br',  `margin-bottom: ${m}; margin-right: ${m};`);
         push('g',  '',    `gap: ${g};`);
         push('row', '',   `display: flex; flex-direction: row; gap: ${g};`);
         push('col', '',   `display: flex; flex-direction: column; gap: ${g};`);

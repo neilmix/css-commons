@@ -15,7 +15,7 @@
     for (let theme of themes) {
         const varname = (str) => `--theme-${theme}-${str}`;
         const get = (str) => computed.getPropertyValue(varname(str)).trim();
-        const tiers = 5;
+        const tiers = 6;
 
         for (let mode of ['', 'dark']) {
             write(`<div class="row0 ${theme} ${mode}">`);
